@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Plantillas{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between">
+  <h1 class="text-3xl font-bold">Plantillas</h1>
+</div>
+
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+  <h2 class="text-xl font-semibold mb-4">Subir plantilla</h2>
+
+  <form method="POST" action="{{ url_for('plantillas_subir') }}" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Tipo</label>
+      <select name="tipo_documento" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2" required>
+        <option value="CERT">CERT</option>
+        <option value="CONST">CONST</option>
+      </select>
+    </div>
+
+    <div class="md:col-span-2">
+      <label class="block text-sm text-gray-300 mb-1">Carrera</label>
+      <input name="carrera" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+        placeholder="Ej INGENIERIA DE SISTEMAS" required>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Archivo docx</label>
+      <input type="file" name="archivo" accept=".docx"
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2" required>
+    </div>
+
+    <div class="md:col-span-4">
+      <button type="submit"
+        class="bg-green-700 hover:bg-green-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+        Subir plantilla
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-semibold">Listado</h2>
+    <div class="text-sm text-gray-400">Total {{ total_plantillas }}</div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto border border-gray-700">
+      <thead>
+        <tr class="bg-gray-700 text-left">
+          <th class="px-4 py-2 border border-gray-600">Tipo</th>
+          <th class="px-4 py-2 border border-gray-600">Carrera</th>
+          <th class="px-4 py-2 border border-gray-600">Archivo</th>
+          <th class="px-4 py-2 border border-gray-600">Activo</th>
+          <th class="px-4 py-2 border border-gray-600">Actualización</th>
+          <th class="px-4 py-2 border border-gray-600">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% if plantillas and plantillas|length > 0 %}
+          {% for p in plantillas %}
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-600">{{ p.tipo_documento }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ p.carrera }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ p.archivo_nombre }}</td>
+
+              <td class="px-4 py-2 border border-gray-600">
+                {% if p.activo == 1 %}
+                  <span class="px-2 py-1 rounded text-xs bg-green-700">SI</span>
+                {% else %}
+                  <span class="px-2 py-1 rounded text-xs bg-red-700">NO</span>
+                {% endif %}
+              </td>
+
+              <td class="px-4 py-2 border border-gray-600">{{ p.actualizado_en }}</td>
+
+              <td class="px-4 py-2 border border-gray-600">
+                <form method="POST" action="{{ url_for('plantillas_toggle', pid=p.id) }}" class="inline">
+                  <button type="submit" class="bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded text-sm">
+                    {% if p.activo == 1 %}Desactivar{% else %}Activar{% endif %}
+                  </button>
+                </form>
+
+                <a href="{{ url_for('plantillas_descargar', pid=p.id) }}"
+                  class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm inline-block ml-2">
+                  Descargar
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6" class="px-4 py-4 border border-gray-600 text-center text-gray-400">
+              Sin plantillas registradas
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mt-4 text-sm text-gray-400">
+    Recomendación al subir una plantilla verifica que contenga marcadores como {{NOMBRE_COMPLETO}} {{DNI}} {{CARRERA}} {{UNIVERSIDAD}} {{CODIGO}} {{FECHA_INICIO}} {{FECHA_FIN}} {{FECHA_EMISION}}
+  </div>
+</div>
+{% endblock %}

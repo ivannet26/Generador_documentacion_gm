@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">Configuración</h1>
+  <p class="text-gray-400 text-sm">Ajustes del sistema y del usuario</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+  <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+    <h2 class="text-lg font-semibold mb-4">Perfil</h2>
+
+    <div class="space-y-3 text-sm">
+      <div>
+        <p class="text-gray-400">Nombre</p>
+        <p class="font-semibold">{{ usuario.nombre_completo if usuario else session.get('nombre') }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400">Correo</p>
+        <p class="font-semibold">{{ usuario.correo if usuario else '-' }}</p>
+      </div>
+      <div>
+        <p class="text-gray-400">Rol</p>
+        <span class="px-2 py-1 rounded text-xs bg-gray-700">{{ session.get('rol') }}</span>
+      </div>
+      <div>
+        <p class="text-gray-400">Último acceso</p>
+        <p class="font-semibold">{{ usuario.ultimo_acceso if usuario and usuario.ultimo_acceso else '-' }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+    <h2 class="text-lg font-semibold mb-4">Cambiar contraseña</h2>
+
+    <form method="POST" action="{{ url_for('configuracion_cambiar_password') }}" class="space-y-4">
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Contraseña actual</label>
+        <input type="password" name="password_actual" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Nueva contraseña</label>
+        <input type="password" name="password_nueva" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Confirmar nueva contraseña</label>
+        <input type="password" name="password_confirmar" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      </div>
+      <button class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg font-semibold">
+        Actualizar contraseña
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<div class="bg-gray-800 rounded-xl p-6 shadow-lg mt-6">
+  <h2 class="text-lg font-semibold mb-4">Parámetros del sistema</h2>
+
+  <form method="POST" action="{{ url_for('configuracion_guardar') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+    <div>
+      <label class="block text-gray-300 mb-1">Carpeta de guardado (servidor)</label>
+      <input name="ruta_salida" value="{{ config.ruta_salida if config else '' }}"
+             class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg"
+             placeholder="archivos/emitidos/">
+    </div>
+
+    <div>
+      <label class="block text-gray-300 mb-1">Correo emisor</label>
+      <input type="email" name="correo_emisor" value="{{ config.correo_emisor if config else '' }}"
+             class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg"
+             placeholder="administracion@tuempresa.com">
+    </div>
+
+    <div class="flex items-end gap-3">
+      <label class="flex items-center gap-2 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 w-full">
+        <input type="checkbox" name="envio_correo" value="1" {% if config and config.envio_correo %}checked{% endif %}>
+        <span>Enviar PDF por correo</span>
+      </label>
+    </div>
+
+    <div class="md:col-span-3">
+      <button class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg font-semibold">
+        Guardar configuración
+      </button>
+    </div>
+  </form>
+
+  <p class="text-gray-500 text-xs mt-3">
+    Estos parámetros se conectarán a la lógica de emisión cuando implementemos el proceso final.
+  </p>
+</div>
+
+{% endblock %}

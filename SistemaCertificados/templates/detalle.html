@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Detalle{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between">
+  <h1 class="text-3xl font-bold">Detalle de solicitud</h1>
+  <a href="{{ url_for('solicitudes') }}" class="text-sm text-green-400 hover:underline">Volver a solicitudes</a>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <div class="lg:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold mb-4">Datos del solicitante</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+      <div>
+        <div class="text-gray-400">Tipo</div>
+        <div class="font-semibold">{{ s.tipo_documento }}</div>
+      </div>
+      <div>
+        <div class="text-gray-400">Estado</div>
+        <div class="font-semibold">{{ s.estado }}</div>
+      </div>
+
+      <div>
+        <div class="text-gray-400">Marca temporal</div>
+        <div class="font-semibold">{{ s.marca_temporal }}</div>
+      </div>
+      <div>
+        <div class="text-gray-400">Correo</div>
+        <div class="font-semibold">{{ s.correo or s.correo_solicitante }}</div>
+      </div>
+
+      <div>
+        <div class="text-gray-400">Nombres</div>
+        <div class="font-semibold">{{ s.nombres }}</div>
+      </div>
+      <div>
+        <div class="text-gray-400">Apellidos</div>
+        <div class="font-semibold">{{ s.apellidos }}</div>
+      </div>
+
+      <div>
+        <div class="text-gray-400">DNI</div>
+        <div class="font-semibold">{{ s.documento }}</div>
+      </div>
+      <div>
+        <div class="text-gray-400">Código alumno</div>
+        <div class="font-semibold">{{ s.codigo_alumno }}</div>
+      </div>
+
+      <div class="md:col-span-2">
+        <div class="text-gray-400">Universidad o instituto</div>
+        <div class="font-semibold">{{ s.universidad }}</div>
+      </div>
+
+      <div>
+        <div class="text-gray-400">Facultad</div>
+        <div class="font-semibold">{{ s.facultad }}</div>
+      </div>
+      <div>
+        <div class="text-gray-400">Carrera</div>
+        <div class="font-semibold">{{ s.carrera }}</div>
+      </div>
+
+      <div>
+        <div class="text-gray-400">Ciclo</div>
+        <div class="font-semibold">{{ s.ciclo }}</div>
+      </div>
+      <div>
+        <div class="text-gray-400">Horas totales</div>
+        <div class="font-semibold">{{ s.horas_totales or '' }}</div>
+      </div>
+
+      <div>
+        <div class="text-gray-400">Ficha inicio</div>
+        <div class="font-semibold">{{ s.fecha_inicio }}</div>
+      </div>
+      <div>
+        <div class="text-gray-400">Ficha fin</div>
+        <div class="font-semibold">{{ s.fecha_fin }}</div>
+      </div>
+      <div class="md:col-span-2 mt-4">
+      <div class="text-gray-400">Actividades realizadas</div>
+      <div class="bg-gray-900/50 p-4 rounded-lg border border-gray-700 shadow-inner">
+        <div class="text-gray-200 whitespace-pre-wrap italic leading-relaxed">
+          {{s.actividades}}
+        </div>
+      </div>
+</div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 p-6 rounded-lg shadow-lg space-y-6">
+    <div>
+      <h2 class="text-xl font-semibold mb-3">Acciones</h2>
+
+      <form method="POST" action="{{ url_for('solicitudes_guardar', sid=s.id) }}" class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Horas totales</label>
+          <input name="horas_totales" value="{{ s.horas_totales or '' }}"
+            class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+            placeholder="Ej 654">
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Observaciones</label>
+          <textarea name="observaciones" rows="4"
+            class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+            placeholder="Escribe observaciones si corresponde">{{ s.observaciones or '' }}</textarea>
+        </div>
+
+        <button type="submit"
+          class="w-full bg-green-700 hover:bg-green-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+          Guardar
+        </button>
+      </form>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3">
+      <form method="POST" action="{{ url_for('solicitudes_marcar_observado', sid=s.id) }}">
+        <button type="submit"
+          class="w-full bg-yellow-700 hover:bg-yellow-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+          Marcar observado
+        </button>
+      </form>
+
+      <form method="POST" action="{{ url_for('solicitudes_marcar_revisado', sid=s.id) }}">
+        <button type="submit"
+          class="w-full bg-blue-700 hover:bg-blue-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+          Marcar revisado
+        </button>
+      </form>
+
+      <form method="POST" action="{{ url_for('solicitudes_emitir', sid=s.id) }}">
+        <button type="submit"
+          class="w-full bg-indigo-700 hover:bg-indigo-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+          Emitir documento
+        </button>
+      </form>
+
+      <form method="POST" action="{{ url_for('solicitudes_anular', sid=s.id) }}">
+        <button type="submit"
+          class="w-full bg-red-700 hover:bg-red-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+          Anular
+        </button>
+      </form>
+    </div>
+
+    <div class="bg-gray-700 p-4 rounded-lg text-sm">
+      <div class="text-gray-300 mb-2">Trazabilidad</div>
+      <div class="text-gray-200">Revisado por {{ s.revisado_por or '' }}</div>
+      <div class="text-gray-200">Ficha revisión {{ s.fecha_revision or '' }}</div>
+      <div class="text-gray-200">Emitido por {{ s.emitido_por or '' }}</div>
+      <div class="text-gray-200">Ficha emisión {{ s.fecha_emision or '' }}</div>
+
+      {% if s.codigo_documento %}
+        <div class="text-gray-200 mt-2">Código {{ s.codigo_documento }}</div>
+      {% endif %}
+
+      {% if s.ruta_pdf %}
+        <div class="mt-3">
+          <a href="/emitidos/{{ s.id }}/descargar" class="text-green-300 hover:underline">
+            Descargar PDF emitido
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+  <h2 class="text-xl font-semibold mb-3">Historial</h2>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto border border-gray-700">
+      <thead>
+        <tr class="bg-gray-700 text-left">
+          <th class="px-4 py-2 border border-gray-600">Ficha</th>
+          <th class="px-4 py-2 border border-gray-600">Usuario</th>
+          <th class="px-4 py-2 border border-gray-600">Acción</th>
+          <th class="px-4 py-2 border border-gray-600">Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if historial and historial|length > 0 %}
+          {% for h in historial %}
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-600">{{ h.creado_en }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ h.usuario }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ h.accion }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ h.detalle or '' }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="4" class="px-4 py-4 border border-gray-600 text-center text-gray-400">
+              Sin historial registrado
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

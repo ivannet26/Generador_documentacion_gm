@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Solicitudes{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between">
+  <h1 class="text-3xl font-bold">Solicitudes</h1>
+
+  <form method="POST" action="{{ url_for('solicitudes_sincronizar') }}">
+    <button type="submit"
+      class="bg-green-700 hover:bg-green-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+      Sincronizar desde Google Sheets
+    </button>
+  </form>
+</div>
+
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+  <form method="GET" action="{{ url_for('solicitudes') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Estado</label>
+      <select name="estado" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2">
+        <option value="">Todos</option>
+        {% for e in estados %}
+          <option value="{{ e }}" {% if filtros.estado == e %}selected{% endif %}>{{ e }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Tipo</label>
+      <select name="tipo" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2">
+        <option value="">Todos</option>
+        <option value="CERT" {% if filtros.tipo == 'CERT' %}selected{% endif %}>CERT</option>
+        <option value="CONST" {% if filtros.tipo == 'CONST' %}selected{% endif %}>CONST</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">DNI</label>
+      <input name="dni" value="{{ filtros.dni or '' }}"
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2"
+        placeholder="Ej 76348612">
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Desde</label>
+      <input type="date" name="desde" value="{{ filtros.desde or '' }}"
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2">
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-300 mb-1">Hasta</label>
+      <input type="date" name="hasta" value="{{ filtros.hasta or '' }}"
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2">
+    </div>
+
+    <div class="md:col-span-5 flex gap-3 pt-2">
+      <button type="submit"
+        class="bg-blue-700 hover:bg-blue-800 transition-colors px-4 py-2 rounded-lg font-semibold">
+        Aplicar filtros
+      </button>
+      <a href="{{ url_for('solicitudes') }}"
+        class="bg-gray-700 hover:bg-gray-600 transition-colors px-4 py-2 rounded-lg font-semibold">
+        Limpiar
+      </a>
+    </div>
+  </form>
+</div>
+
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-semibold">Bandeja</h2>
+    <div class="text-sm text-gray-400">
+      Total {{ total }}
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto border border-gray-700">
+      <thead>
+        <tr class="bg-gray-700 text-left">
+          <th class="px-4 py-2 border border-gray-600">Ficha</th>
+          <th class="px-4 py-2 border border-gray-600">Tipo</th>
+          <th class="px-4 py-2 border border-gray-600">DNI</th>
+          <th class="px-4 py-2 border border-gray-600">Nombre</th>
+          <th class="px-4 py-2 border border-gray-600">Carrera</th>
+          <th class="px-4 py-2 border border-gray-600">Horas</th>
+          <th class="px-4 py-2 border border-gray-600">Estado</th>
+          <th class="px-4 py-2 border border-gray-600">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% if solicitudes and solicitudes|length > 0 %}
+          {% for s in solicitudes %}
+            <tr class="hover:bg-gray-700">
+              <td class="px-4 py-2 border border-gray-600">{{ s.marca_temporal }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ s.tipo_documento }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ s.documento }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ s.nombres }} {{ s.apellidos }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ s.carrera }}</td>
+              <td class="px-4 py-2 border border-gray-600">{{ s.horas_totales or '' }}</td>
+              <td class="px-4 py-2 border border-gray-600">
+                <span class="px-2 py-1 rounded text-xs bg-gray-600">{{ s.estado }}</span>
+              </td>
+
+              <td class="px-4 py-2 border border-gray-600">
+                <a href="/solicitudes/{{ s.id }}"
+                  class="bg-green-700 hover:bg-green-800 px-3 py-1 rounded text-sm inline-block">
+                  Ver detalle
+                </a>
+
+                {% if s.estado in ['RECIBIDO','PENDIENTE','OBSERVADO','REVISADO'] %}
+                  <a href="/solicitudes/{{ s.id }}?emitir=1"
+                    class="bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded text-sm inline-block ml-2">
+                    Ir a emitir
+                  </a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="8" class="px-4 py-4 border border-gray-600 text-center text-gray-400">
+              No hay solicitudes para mostrar
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

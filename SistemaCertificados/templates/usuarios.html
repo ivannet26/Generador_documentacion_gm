@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">Usuarios</h1>
+    <p class="text-gray-400 text-sm">Gestión de accesos al sistema</p>
+  </div>
+
+  {% if session.get("rol") == "COORDINADOR" %}
+  <button onclick="openModal('modalCrear')" class="bg-green-700 hover:bg-green-800 px-4 py-2 rounded-lg font-semibold">
+    Crear usuario
+  </button>
+  {% endif %}
+</div>
+
+<div class="bg-gray-800 rounded-xl p-5 shadow-lg mb-6">
+  <form method="GET" action="{{ url_for('usuarios') }}" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <input name="q" value="{{ filtros.q if filtros else '' }}" placeholder="Buscar por nombre o correo"
+      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700">
+    <select name="rol" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      <option value="">Rol (todos)</option>
+      <option value="COORDINADOR" {% if filtros and filtros.rol=='COORDINADOR' %}selected{% endif %}>COORDINADOR</option>
+      <option value="ASISTENTE" {% if filtros and filtros.rol=='ASISTENTE' %}selected{% endif %}>ASISTENTE</option>
+    </select>
+    <select name="activo" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      <option value="">Estado (todos)</option>
+      <option value="1" {% if filtros and filtros.activo=='1' %}selected{% endif %}>Activos</option>
+      <option value="0" {% if filtros and filtros.activo=='0' %}selected{% endif %}>Inactivos</option>
+    </select>
+    <button class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg font-semibold">Filtrar</button>
+  </form>
+</div>
+
+<div class="bg-gray-800 rounded-xl p-5 shadow-lg">
+  <div class="overflow-x-auto">
+    <table class="min-w-full table-auto border border-gray-700">
+      <thead>
+        <tr class="bg-gray-700 text-left">
+          <th class="px-4 py-2 border border-gray-600">ID</th>
+          <th class="px-4 py-2 border border-gray-600">Nombre</th>
+          <th class="px-4 py-2 border border-gray-600">Correo</th>
+          <th class="px-4 py-2 border border-gray-600">Rol</th>
+          <th class="px-4 py-2 border border-gray-600">Estado</th>
+          <th class="px-4 py-2 border border-gray-600">Último acceso</th>
+          <th class="px-4 py-2 border border-gray-600">Acciones</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% if usuarios and usuarios|length > 0 %}
+          {% for u in usuarios %}
+          <tr class="hover:bg-gray-700">
+            <td class="px-4 py-2 border border-gray-600">{{ u.id }}</td>
+            <td class="px-4 py-2 border border-gray-600">{{ u.nombre_completo }}</td>
+            <td class="px-4 py-2 border border-gray-600">{{ u.correo }}</td>
+            <td class="px-4 py-2 border border-gray-600">
+              <span class="px-2 py-1 rounded text-xs bg-gray-600">{{ u.rol }}</span>
+            </td>
+            <td class="px-4 py-2 border border-gray-600">
+              {% if u.activo == 1 %}
+                <span class="px-2 py-1 rounded text-xs bg-green-700">ACTIVO</span>
+              {% else %}
+                <span class="px-2 py-1 rounded text-xs bg-red-700">INACTIVO</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-2 border border-gray-600">{{ u.ultimo_acceso or '-' }}</td>
+
+            <td class="px-4 py-2 border border-gray-600 space-x-2">
+              {% if session.get("rol") == "COORDINADOR" %}
+                <form method="POST" action="{{ url_for('usuarios_toggle', uid=u.id) }}" class="inline">
+                  <button class="px-3 py-1 rounded text-sm bg-blue-700 hover:bg-blue-800">
+                    {% if u.activo == 1 %}Inactivar{% else %}Activar{% endif %}
+                  </button>
+                </form>
+
+                <form method="POST" action="{{ url_for('usuarios_cambiar_rol', user_id=u.id) }}" class="inline">
+                  <select name="rol" class="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-sm">
+                    <option value="ASISTENTE" {% if u.rol=='ASISTENTE' %}selected{% endif %}>ASISTENTE</option>
+                    <option value="COORDINADOR" {% if u.rol=='COORDINADOR' %}selected{% endif %}>COORDINADOR</option>
+                  </select>
+                  <button class="px-3 py-1 rounded text-sm bg-green-700 hover:bg-green-800">Guardar</button>
+                </form>
+
+                {% if u.id != session.get("user_id") %}
+                <form method="POST" action="{{ url_for('usuarios_eliminar', user_id=u.id) }}" class="inline"
+                      onsubmit="return confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')">
+                  <button class="px-3 py-1 rounded text-sm bg-red-700 hover:bg-red-800">Eliminar</button>
+                </form>
+                {% endif %}
+              {% else %}
+                <span class="text-gray-400 text-sm">Sin permisos</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" class="px-4 py-4 border border-gray-600 text-center text-gray-400">
+              No hay usuarios para mostrar.
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if session.get("rol") == "COORDINADOR" %}
+<div id="modalCrear" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+  <div class="bg-gray-800 w-full max-w-lg rounded-2xl p-6 shadow-xl">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">Crear usuario</h2>
+      <button onclick="closeModal('modalCrear')" class="text-gray-300 hover:text-white">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('usuarios_crear') }}" class="space-y-4">
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Nombre completo</label>
+        <input name="nombre" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Correo</label>
+        <input name="correo" type="email" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Contraseña temporal</label>
+        <input name="contrasena" type="password" required class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+      </div>
+      <div>
+        <label class="block text-sm text-gray-300 mb-1">Rol</label>
+        <select name="rol" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg">
+          <option value="ASISTENTE">ASISTENTE</option>
+          <option value="COORDINADOR">COORDINADOR</option>
+        </select>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button type="button" onclick="closeModal('modalCrear')" class="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600">Cancelar</button>
+        <button class="px-4 py-2 rounded-lg bg-green-700 hover:bg-green-800 font-semibold">Crear</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<script>
+function openModal(id){ document.getElementById(id).classList.remove("hidden"); document.getElementById(id).classList.add("flex"); }
+function closeModal(id){ document.getElementById(id).classList.add("hidden"); document.getElementById(id).classList.remove("flex"); }
+</script>
+
+{% endblock %}
