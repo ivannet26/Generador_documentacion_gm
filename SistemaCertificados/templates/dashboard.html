@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  <div class="flex items-center justify-between">
+    <h1 class="text-3xl font-bold">Dashboard</h1>
+  </div>
+
+  <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold mb-4">Resumen</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div class="bg-gray-700 p-4 rounded-xl">
+        <p class="text-gray-300 text-sm">Recibido</p>
+        <p class="text-2xl font-bold">{{ kpi_recibido }}</p>
+      </div>
+      <div class="bg-gray-700 p-4 rounded-xl">
+        <p class="text-gray-300 text-sm">Pendiente</p>
+        <p class="text-2xl font-bold">{{ kpi_pendiente }}</p>
+      </div>
+      <div class="bg-gray-700 p-4 rounded-xl">
+        <p class="text-gray-300 text-sm">Observado</p>
+        <p class="text-2xl font-bold">{{ kpi_observado }}</p>
+      </div>
+      <div class="bg-gray-700 p-4 rounded-xl">
+        <p class="text-gray-300 text-sm">Revisado</p>
+        <p class="text-2xl font-bold">{{ kpi_revisado }}</p>
+      </div>
+      <div class="bg-gray-700 p-4 rounded-xl">
+        <p class="text-gray-300 text-sm">Emitido</p>
+        <p class="text-2xl font-bold">{{ kpi_emitido }}</p>
+      </div>
+      <div class="bg-gray-700 p-4 rounded-xl">
+        <p class="text-gray-300 text-sm">Anulado</p>
+        <p class="text-2xl font-bold">{{ kpi_anulado }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold">Últimas 10 operaciones</h2>
+      <a href="/reportes" class="text-sm text-green-400 hover:underline">Ir a reportes</a>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full table-auto border border-gray-700">
+        <thead>
+          <tr class="bg-gray-700 text-left">
+            <th class="px-4 py-2 border border-gray-600">#</th>
+            <th class="px-4 py-2 border border-gray-600">Tipo</th>
+            <th class="px-4 py-2 border border-gray-600">DNI</th>
+            <th class="px-4 py-2 border border-gray-600">Nombre</th>
+            <th class="px-4 py-2 border border-gray-600">Estado</th>
+            <th class="px-4 py-2 border border-gray-600">Usuario</th>
+            <th class="px-4 py-2 border border-gray-600">Fecha</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% if ultimas10 and ultimas10|length > 0 %}
+            {% for item in ultimas10 %}
+              <tr class="hover:bg-gray-700">
+                <td class="px-4 py-2 border border-gray-600">{{ item.id }}</td>
+                <td class="px-4 py-2 border border-gray-600">{{ item.tipo_documento }}</td>
+                <td class="px-4 py-2 border border-gray-600">{{ item.documento }}</td>
+                <td class="px-4 py-2 border border-gray-600">{{ item.nombre_completo }}</td>
+                <td class="px-4 py-2 border border-gray-600">{{ item.estado }}</td>
+                <td class="px-4 py-2 border border-gray-600">{{ item.usuario }}</td>
+                <td class="px-4 py-2 border border-gray-600">{{ item.fecha }}</td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="px-4 py-4 border border-gray-600 text-center text-gray-400">
+                No hay operaciones recientes.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-semibold mb-3">Alertas</h2>
+    <ul class="list-disc pl-5 text-gray-300 space-y-1">
+      <li>Solicitudes observadas: {{ alert_observadas }}</li>
+      <li>Plantillas faltantes o inactivas: {{ alert_plantillas }}</li>
+      <li>Correos fallidos por reenviar: {{ alert_correos_fallidos }}</li>
+    </ul>
+  </div>
+{% endblock %}

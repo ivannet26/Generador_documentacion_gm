@@ -1,0 +1,21 @@
+venv/
+__pycache__/
+*.db
+.env
+archivos/emitidos/*
+
+# Ejecutables y carpetas de PyInstaller
+dist/
+build/
+*.spec
+
+# Entornos virtuales
+venv/
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Archivos temporales o de base de datos local si no quieres subirlos
+SistemaCertificados/archivos/emitidos/*.docx

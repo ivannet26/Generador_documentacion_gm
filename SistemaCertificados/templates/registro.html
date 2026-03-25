@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión Documental - Registro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center">
+  <div class="bg-gray-800 p-8 rounded-2xl shadow-md w-full max-w-md">
+    <!-- Título -->
+    <h2 class="text-2xl font-bold mb-2 text-center">Registro de Usuario</h2>
+    <p class="text-center text-gray-400 mb-5">Crea tu cuenta para acceder al sistema</p>
+
+    <!-- 🔹 Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+            <div class="p-3 mb-2 rounded-lg text-sm 
+              {% if category == 'error' %} bg-red-100 text-red-700 
+              {% elif category == 'success' %} bg-green-100 text-green-700 
+              {% elif category == 'info' %} bg-blue-100 text-blue-700 
+              {% else %} bg-gray-700 text-white {% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Formulario funcional -->
+    <form method="POST" action="/registrarse" class="space-y-4">
+      <div>
+        <label for="nombre" class="block text-sm font-medium text-gray-300">Nombre completo</label>
+        <input type="text" id="nombre" name="nombre"
+               placeholder="Ej. Juan Pérez"
+               class="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-700"
+               required>
+      </div>
+
+      <div>
+        <label for="correo" class="block text-sm font-medium text-gray-300">Correo electrónico</label>
+        <input type="email" id="correo" name="correo"
+               placeholder="usuario@ejemplo.com"
+               class="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-700"
+               required>
+      </div>
+
+      <!-- Contraseña -->
+      <div class="relative">
+        <label for="contrasena" class="block text-sm font-medium text-gray-300">Contraseña</label>
+        <input type="password" id="contrasena" name="contrasena"
+               placeholder="••••••••"
+               class="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-700 pr-10"
+               required>
+        <span class="absolute inset-y-0 right-3 flex items-center cursor-pointer" onclick="togglePassword('contrasena','eye1')">
+          <svg id="eye1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" 
+               class="w-5 h-5 text-gray-400 transition-colors duration-200 mt-1">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </span>
+      </div>
+
+      <!-- Confirmar contraseña -->
+      <div class="relative">
+        <label for="confirmar" class="block text-sm font-medium text-gray-300">Confirmar contraseña</label>
+        <input type="password" id="confirmar" name="confirmar"
+               placeholder="••••••••"
+               class="mt-1 block w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-700 pr-10"
+               required>
+        <span class="absolute inset-y-0 right-3 flex items-center cursor-pointer" onclick="togglePassword('confirmar','eye2')">
+          <svg id="eye2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+               class="w-5 h-5 text-gray-400 transition-colors duration-200 mt-1">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        </span>
+      </div>
+
+      <!-- Botón de registro -->
+      <button type="submit"
+              class="w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-2 rounded-lg transition-colors">
+        Registrarse
+      </button>
+    </form>
+
+    <p class="mt-6 text-sm text-center text-gray-400">
+      ¿Ya tienes cuenta?
+      <a href="/" class="text-green-500 hover:underline">Inicia sesión</a>
+    </p>
+  </div>
+
+  <!-- Script mostrar/ocultar contraseña -->
+  <script>
+    function togglePassword(inputId, eyeId) {
+      const input = document.getElementById(inputId);
+      const eye = document.getElementById(eyeId);
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      eye.classList.toggle("text-green-600", isPassword);
+      eye.classList.toggle("text-gray-400", !isPassword);
+    }
+  </script>
+</body>
+</html>

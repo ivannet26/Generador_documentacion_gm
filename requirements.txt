@@ -1,0 +1,7 @@
+openai
+pandas
+fpdf
+python-dotenv
+streamlit
+flask
+gunicorn
