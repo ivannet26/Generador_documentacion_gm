@@ -403,7 +403,7 @@ def iniciar_sesion():
 
         if int(u["activo"]) != 1:
             conn.close()
-            flash("Usuario inactivo. Contacta al coordinador", "error")
+            flash("Esperar confirmacion del coordinador", "error")
             return redirect(url_for("login"))
 
         if not check_password_hash(u["password_hash"], contrasena):
@@ -441,7 +441,6 @@ def registrarse():
         flash("Las contraseñas no coinciden", "error")
         return redirect(url_for("registro"))
 
-    
     conn = db_mysql()
     with conn.cursor() as cur:
         cur.execute("SELECT 1 FROM usuarios WHERE correo = %s", (correo,))
@@ -454,18 +453,29 @@ def registrarse():
 
         cur.execute("SELECT COUNT(*) AS n FROM usuarios")
         total = cur.fetchone()["n"]
-        rol = "COORDINADOR" if total == 0 else "ASISTENTE"
+        
+        if total == 0:
+            rol = "COORDINADOR"
+            activo = 1  
+        else:
+            rol = "ASISTENTE"
+            activo = 0  
 
         password_hash = generate_password_hash(contrasena)
 
         cur.execute("""
             INSERT INTO usuarios (nombre_completo, correo, password_hash, rol, activo, fecha_creacion)
-            VALUES (%s, %s, %s, %s, 1, %s)
-        """, (nombre, correo, password_hash, rol, ahora()))
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (nombre, correo, password_hash, rol, activo, ahora()))
         conn.commit()
     conn.close()
 
-    flash(f"Registro exitoso. Rol asignado {rol}", "success")
+
+    if activo == 1:
+        flash("Registro exitoso. Eres el primer usuario, ingresas como COORDINADOR.", "success")
+    else:
+        flash("Registro exitoso. Tu cuenta está inactiva, esperar confirmación del coordinador.", "info")
+        
     return redirect(url_for("login"))
 
 
