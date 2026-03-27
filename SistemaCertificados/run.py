@@ -10,11 +10,11 @@ import sys
 from werkzeug.utils import secure_filename
 from flask import send_file, abort
 from docx import Document
-#import comtypes.client
+import comtypes.client
 import uuid
-#import pythoncom
+import pythoncom
 import time
-#import webbrowser
+import webbrowser
 from threading import Timer
 from dotenv import load_dotenv
 
@@ -192,6 +192,21 @@ def usuario_actual():
         u = conn.execute("SELECT * FROM usuarios WHERE id = ?", (session["user_id"],)).fetchone()
         conn.close()
         return u
+
+def formatear_fecha_latam(valor):
+    txt = s(valor)
+    if not txt:
+        return ""
+    
+    formatos = ["%d/%m/%Y", "%d/%m/%y", "%m/%d/%Y", "%Y-%m-%d"]
+    for fmt in formatos:
+        try:
+            dt = datetime.strptime(txt, fmt)
+            return dt.strftime("%d/%m/%Y") 
+        except ValueError:
+            continue
+            
+    return txt
 
 def s(v):
     if pd.isna(v) or v is None:
@@ -851,8 +866,28 @@ def solicitudes_emitir(sid):
         conn.commit()
         conn.close()
 
+        try:
+            conn_my = db_mysql()
+            with conn_my.cursor() as cur:
+                nombre_completo = f"{s['nombres']} {s['apellidos']}"
+                cur.execute("""
+                    INSERT INTO reportes (solicitud_id, codigo_documento, nombre_completo, documento, tipo_documento, estado, fecha_emision, emitido_por, ruta_pdf)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE 
+                        estado = 'EMITIDO', fecha_emision = VALUES(fecha_emision), emitido_por = VALUES(emitido_por), ruta_pdf = VALUES(ruta_pdf)
+                """, (
+                    sid, codigo_doc, nombre_completo, s['documento'], tipo_doc, 
+                    'EMITIDO', ahora(), session.get("nombre","USUARIO"), ruta_bd
+                ))
+            conn_my.commit()
+            conn_my.close()
+        except Exception as e:
+            print(f"Error al guardar reporte en MySQL: {e}")
+
         flash("Solicitud marcada como EMITIDO y documento generado", "success")
         return redirect(url_for("solicitudes_detalle", sid=sid))
+
+       
 
 @app.post("/solicitudes/<int:sid>/anular")
 @login_required
@@ -867,6 +902,7 @@ def solicitudes_anular(sid):
             flash("Solicitud no encontrada", "error")
             return redirect(url_for("solicitudes"))
 
+        
         conn.execute("""
             UPDATE solicitudes
             SET estado = 'ANULADO',
@@ -878,25 +914,17 @@ def solicitudes_anular(sid):
         conn.commit()
         conn.close()
 
+        try:
+            conn_my = db_mysql()
+            with conn_my.cursor() as cur:
+                cur.execute("UPDATE reportes SET estado = 'ANULADO' WHERE solicitud_id = %s", (sid,))
+            conn_my.commit()
+            conn_my.close()
+        except Exception as e:
+            print(f"Error al anular reporte en MySQL: {e}")
+
         flash("Solicitud anulada", "success")
         return redirect(url_for("solicitudes_detalle", sid=sid))
-
-def formatear_fecha_latam(valor):
-        txt = s(valor)
-        if not txt:
-            return ""
-        
-    
-        formatos = ["%d/%m/%Y", "%d/%m/%y", "%m/%d/%Y", "%Y-%m-%d"]
-        
-        for fmt in formatos:
-            try:
-                dt = datetime.strptime(txt, fmt)
-                return dt.strftime("%d/%m/%Y") 
-            except ValueError:
-                continue
-                
-        return txt 
 
 
 
@@ -1326,47 +1354,50 @@ def reportes():
         desde = (request.args.get("desde") or "").strip()
         hasta = (request.args.get("hasta") or "").strip()
 
-        conn = db()
-        ensure_solicitudes_schema(conn)
-
         where = []
         params = []
         
         if tipo:
-            where.append("tipo_documento = ?")
+            where.append("tipo_documento = %s")
             params.append(tipo)
         if estado:
-            where.append("estado = ?")
+            where.append("estado = %s")
             params.append(estado)
         if desde:
-            where.append("fecha_emision >= ?")
+            where.append("fecha_emision >= %s")
             params.append(desde + " 00:00:00")
         if hasta:
-            where.append("fecha_emision <= ?")
+            where.append("fecha_emision <= %s")
             params.append(hasta + " 23:59:59")
 
         sql = """
             SELECT 
-                id,
+                solicitud_id AS id,
                 codigo_documento AS codigo,
-                (nombres || ' ' || apellidos) AS nombre_completo,
+                nombre_completo,
                 documento,
                 tipo_documento AS tipo,
                 estado,
                 fecha_emision,
                 emitido_por,
                 ruta_pdf
-            FROM solicitudes
+            FROM reportes
         """
+        
         where.append("estado IN ('EMITIDO', 'ANULADO')")
 
         if where:
             sql += " WHERE " + " AND ".join(where)
         sql += " ORDER BY fecha_emision DESC LIMIT 500"
 
-        rows = conn.execute(sql, params).fetchall()
-        total = len(rows)
+   
+        conn = db_mysql()
+        with conn.cursor() as cur:
+            cur.execute(sql, params)
+            rows = cur.fetchall()
         conn.close()
+
+        total = len(rows)
 
         return render_template(
             "reportes.html",
@@ -1375,7 +1406,6 @@ def reportes():
             total=total,
             filtros={"tipo": tipo, "estado": estado, "desde": desde, "hasta": hasta},
         )
-
 
 @app.get("/configuracion")
 @login_required
