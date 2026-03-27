@@ -10,11 +10,11 @@ import sys
 from werkzeug.utils import secure_filename
 from flask import send_file, abort
 from docx import Document
-import comtypes.client
+#import comtypes.client
 import uuid
-import pythoncom
+#import pythoncom
 import time
-import webbrowser
+#import webbrowser
 from threading import Timer
 from dotenv import load_dotenv
 
