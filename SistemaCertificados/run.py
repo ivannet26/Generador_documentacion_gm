@@ -10,13 +10,14 @@ import sys
 from werkzeug.utils import secure_filename
 from flask import send_file, abort
 from docx import Document
-#import comtypes.client
+import comtypes.client
 import uuid
-#import pythoncom
+import pythoncom
 import time
-#import webbrowser
+import webbrowser
 from threading import Timer
 from dotenv import load_dotenv
+import unicodedata
 
 load_dotenv()
 
@@ -137,6 +138,74 @@ else:
             "● Armado y elaboración de expedientes de licitación"
         )
     }
+        MAP_CARRERAS = {
+            "ARQUITECTURA Y URBANISMO": 1, "DERECHO": 2, "DIBUJANTE TECNICO MECANICO": 3, 
+            "ING. INDUSTRIAL": 4, "ING. CIVIL": 5, "ADMINISTRACIÓN Y MARKETING": 6, 
+            "ARQUITECTURA Y DISEÑO DE INT.": 7, "INGENIERÍA DE SISTEMAS": 8, 
+            "ADMINISTRACION Y NEGOCIOS INTERNACIONALES": 9, "ADMINISTRACION DE EMPRESAS": 10, 
+            "ECONÓMIA Y NEGOCIOS INTERNACIONALES": 11, "INGENIERIA DE SOFTWARE": 12, 
+            "DISEÑO Y DESARROLLO DE MAQUINAS": 13, "DISEÑO Y ADMINISTRACIÓN BANCARIA Y FINANCIERA": 14, 
+            "INGENIERÍA AMBIENTAL": 15, "INGENIERIA GEOLOGICA": 16, "INGENIERÍA EN GESTIÓN AMBIENTAL": 17, 
+            "PSICOLOGIA": 18, "INGENIERIA GEOGRÀFICA": 19, "DISEÑO GRAFICO": 20, 
+            "ING. EN SEGURIDAD LABORAL Y AMBIENTAL": 21, "INGENIERÍA COMERCIAL": 22, 
+            "INGENIERÍA BIOTECNOLÓGICA": 23, "INGENIERÍA AGRÍCOLA": 24, "SOCIOLOGIA": 25, 
+            "INGENIERÍA DE CIBERSEGURIDAD": 26, "SIN DEFINIR..": 27, "ARQUITECTURA": 28, 
+            "INGENIERA INDUSTRIAL Y DE SISTEMAS": 29, "INGENIERÍA DE SISTEMAS DE  INFORMACION": 30, 
+            "ADMINISTRACIÓN": 31, "PUBLICIDAD Y MULTIMEDIA": 33, "ADMINISTRACIÓN HOTELERA Y TURISMO": 34, 
+            "INGENIERIA DE GESTION EMPRESARIAL": 35, "CONTABILIDAD": 36, "ARQUITECTURA Y DISEÑO": 37, 
+            "ADMINISTRACION DE HOTELES Y TURISMO": 38, "DESARROLLO DE SOFTWARE": 51, 
+            "INGENIERIA MECANICA": 53, "INGENIERÍA DE MINAS": 55, "GEOGRAFÍA Y MEDIO AMBIENTE": 56, 
+            "BIOINGENIERIA": 57, "BIOLOGÍA": 58
+        }
+
+        MAP_INSTITUCIONES = {
+            "SIN DEFINIR": 1, "UNIVERSIDAD PRIVADA DEL NORTE": 2, "SENATI": 3, 
+            "UNIVERSIDAD CESAR VALLEJO": 4, "UNIVERSIDAD PERUANA DE CIENCIAS APLICADAS": 5, 
+            "UNIVERSIDAD DE LIMA": 6, "UNIVERSISAD SAN MARTIN DE PORRES": 7,
+            "UNIVERSIDAD SAN MARTIN DE PORRES": 7,
+            "UNIVERSIDAD NACIONAL DE SAN CRISTOBAL DE HUAMANGA": 8, "UNIVERSIDAD NACIONAL DE CAJAMARCA": 9, 
+            "UNIVERSIDAD CATÓLICA SAN PABLO": 10, "UNIVERSIDAD DE PIURA": 11, 
+            "UNIVERSIDAD NACIONAL MAYOR DE SAN MARCOS": 12, "UNIVERSIDAD NACIONAL DE INGENIERIA": 13, 
+            "UNIVERSIDAD RICARDO PALMA": 14, "UNIVERSIDAD CATOLICA SANTO TORIBIO DE MOGROVEJO": 15, 
+            "UNIVERSIDAD NACIONAL DE SAN AGUSTÍN DE AREQUIPA": 16, "UNIVERSIDAD CATÓLICA LOS ÁNGELES DE CHIMBOTE": 17, 
+            "UNIVERSIDAD PRIVADA ANTENOR ORREGO": 19, "UNIVERSIDAD AUTÓNOMA DEL PERÚ": 20, 
+            "UNIVERSIDAD NACIONAL DE MOQUEGUA": 21, "UNIVERSIDAD CATOLICA DE SANTA MARIA": 22, 
+            "UNIVERSIDAD NACIONAL DE SAN ANTONIO ABAD DEL CUSCO": 23, "UNIVERSIDAD CONTINENTAL": 24, 
+            "UNIVERSIDAD TECNOLOGICA DEL PERU": 25, "IDAT": 26, 
+            "UNIVERSIDAD NACIONAL FEDERICO VILLAREAL (UNFV)": 27, "UNIVERSIDAD NACIONAL TECNOLÓGICA DE LIMA SUR": 29, 
+            "UNIVERSIDAD NACIONAL DE SAN MARTÍN": 30, "UNIVERSIDAD SAN IGNACIO DE LOYOLA": 31, 
+            "UNIVERSIDAD FEMENINA DEL SAGRADO CORAZÓN (UNIFE)": 32, "PONTIFICIA UNIVERSIDAD CATÓLICA DEL PERÚ": 33, 
+            "UNIVERSIDAD NACIONAL DE PIURA": 34, "UNIVERSIDAD CIENTÍFICA DEL SUR": 35, 
+            "UNIVERSIDAD NACIONAL PEDRO RUIZ GALLO": 36, "UNIVERSIDAD DE INGENIERÍA Y TECNOLOGÍA (UTEC)": 37, 
+            "UNIVERSIDAD PRIVADA SAN JUAN BAUTISTA": 38, "UNIVERSIDAD NACIONAL DEL CALLAO": 39, 
+            "UNIVERSIDAD NACIONAL AGRARIA LA MOLINA": 40, "UNIVERSIDAD NACIONAL DE FRONTERA": 41, 
+            "UNIVERSIDAD DE CIENCIAS Y ARTES DE AMÉRICA LATINA (UCAL)": 42, "ESCUELA DE ADMINISTRACIÓN DE NEGOCIOS PARA GRADUADOS (ESAN)": 43, 
+            "UNIVERSIDAD ANDINA DEL CUSCO": 44, "UNIVERSIDAD TECNOLOGICA DE LOS ANDES": 45, 
+            "INSTITUTO DE EDUCACIÓN SUPERIOR PRIVADO ZEGEL": 46, "UNIVERSIDAD NACIONAL JOSÉ FAUSTINO SÁNCHEZ CARRIÓN (UNJFSC)": 47, 
+            "UNIVERSIDAD PERUANA UNIÓN": 49, "UNIVERSIDAD CATOLICA SEDES SAPIENTIAE (UCSS)": 50, 
+            "UNIVERSIDAD DEL PACÍFICO": 51, "UNIVERSIDAD NACIONAL DE EDUCACIÓN ENRIQUE GUZMÁN Y VALLE": 52, 
+            "UNIVERSIDAD NACIONAL SANTIAGO ANTÚNEZ DE MAYOLO": 53, "UNIVERSIDAD NACIONAL INTERCULTURAL DE LA SELVA CENTRAL JUAN SANTOS ATAHUALPA": 54, 
+            "UNIVERSIDAD NACIONAL DE LA AMAZONIA PERUANA": 55, "UNIVERSIDAD NACIONAL INTERCULTURAL DE LA AMAZONIA": 56, 
+            "TOULOUSE LAUTREC": 57, "UNIVERSIDAD NACIONAL DE BARRANCA": 58, 
+            "UNIVERSIDAD NACIONAL DE TRUJILLO": 59, "UNIVERSIDAD NACIONAL DE UCAYALI": 60, 
+            "UNIVERSIDAD NACIONAL DEL SANTA": 65, "COLEGIO INGENIERÍA SAC": 66, 
+            "I.E.P. SANTA ROSA": 67, "ACADEMIA PRE-U": 68, "CENTRO DE IDIOMAS AMERICANO": 72, 
+            "I.E.P. ADVENTISTA": 73, "INSTITUTO TECNOLÓGICO SUR": 74, "UNIVERSIDAD DE HUANUCO": 102
+        }
+
+        MAP_FACULTADES = {
+            "POR DEFINIR...": 1, "INGENIERÍA": 2, "DERECHO": 3, "CIENCIAS CONTABLES": 4, 
+            "ADMINISTRACIÓN": 5, "DISEÑO": 6, "LICENCIATURA": 7, "ARQUITECTURA": 8, 
+            "INGENIERÍA Y ARQUITECTURA": 9, "CIENCIAS ECONÓMICAS Y ADMINISTRATIVA": 10, 
+            "INGENIERÍA CIVIL": 11, "INGENERÍA CIVIL Y ARQUITECTURA": 12, "ARQUITECTURA URBANISMO Y ARTES": 13, 
+            "INGENIERÍA DE SISTEMAS E INFORMÁTICA": 14, "CIENCIAS SOCIALES": 15, "CIENCIAS E INGENIERÍA": 16, 
+            "INGENIERIA AMBIENTAL": 17, "CIENCIAS EMPRESARIALES": 18, "ARQUITECTURA E INGENIERIA": 19, 
+            "ARQUITECTURA Y DISEÑO": 20, "ING. GEOLÓGICA, MINERA, METALÚRGICA Y GEOGRÁFICA": 22, 
+            "FACULTAD DE PROCESOS": 23, "FACULTAD DE LETRAS Y CIENCIAS HUMANAS": 26, 
+            "INGENIERIA QUIMICA": 27, "NEGOCIOS": 28
+        }
+
+
 
 
 ALLOWED_TEMPLATE_EXT = {".docx"}
@@ -163,6 +232,17 @@ def db_mysql():
         cursorclass=pymysql.cursors.DictCursor 
     )
 
+def db_mysql_gmingenieros():
+    return pymysql.connect(
+        host=MYSQL_HOST,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        database='gmingenieros',
+        port=MYSQL_PORT,
+        ssl={"ssl": {}},
+        cursorclass=pymysql.cursors.DictCursor 
+    )
+
 def db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -174,6 +254,38 @@ def db():
 def ahora():
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+def buscar_id(valor_excel, diccionario):
+    if not valor_excel: return None
+    if valor_excel in diccionario:
+        return diccionario[valor_excel]
+    for key, val in diccionario.items():
+        if key in valor_excel or valor_excel in key:
+            return val
+    return None
+
+def normalizar_texto(texto):
+    if not texto: return ""
+    texto = str(texto).upper().strip()
+    texto_sin_tildes = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
+    return texto_sin_tildes
+
+def buscar_id(valor_excel, diccionario):
+    if not valor_excel: return None
+    
+    val_norm = normalizar_texto(valor_excel)
+    
+   
+    for key, val in diccionario.items():
+        if normalizar_texto(key) == val_norm:
+            return val
+            
+
+    for key, val in diccionario.items():
+        key_norm = normalizar_texto(key)
+        if val_norm in key_norm or key_norm in val_norm:
+            return val
+            
+    return None
 
 def login_required(view_func):
         def wrapper(*args, **kwargs):
@@ -342,22 +454,6 @@ def ensure_solicitudes_schema(conn):
 
         conn.commit()
 
-def ensure_historial_schema(conn):
-        cur = conn.cursor()
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS historial_solicitud (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            solicitud_id INTEGER NOT NULL,
-            ficha TEXT NOT NULL,
-            usuario TEXT NOT NULL,
-            accion TEXT NOT NULL,
-            detalle TEXT,
-            creado_en TEXT NOT NULL,
-            FOREIGN KEY (solicitud_id) REFERENCES solicitudes(id) ON DELETE CASCADE
-        )
-        """)
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_hist_sol_id ON historial_solicitud(solicitud_id)")
-        conn.commit()
 
 def ensure_config_schema(conn):
         cur = conn.cursor()
@@ -504,66 +600,69 @@ def logout():
 @app.get("/dashboard")
 @login_required
 def dashboard():
-        conn = db()
+    nombre_usuario_actual = session.get("nombre", "")
 
-        # por si aún no existen
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
+    # 1. KPIs
+    conn_lite = db()
+    def count_estado_usuario(estado):
+        if session.get("rol") == "COORDINADOR":
+            r = conn_lite.execute("SELECT COUNT(*) AS n FROM solicitudes WHERE estado = ?", (estado,)).fetchone()
+        else:
+            if estado == "EMITIDO":
+                r = conn_lite.execute("SELECT COUNT(*) AS n FROM solicitudes WHERE estado = ? AND emitido_por = ?", (estado, nombre_usuario_actual)).fetchone()
+            elif estado == "REVISADO":
+                r = conn_lite.execute("SELECT COUNT(*) AS n FROM solicitudes WHERE estado = ? AND revisado_por = ?", (estado, nombre_usuario_actual)).fetchone()
+            else:
+                r = conn_lite.execute("SELECT COUNT(*) AS n FROM solicitudes WHERE estado = ?", (estado,)).fetchone()
+        return int(r["n"]) if r else 0
 
-        def count_estado(e):
-            r = conn.execute("SELECT COUNT(*) AS n FROM solicitudes WHERE estado = ?", (e,)).fetchone()
-            return int(r["n"]) if r else 0
+    kpi_recibido  = count_estado_usuario("RECIBIDO")
+    kpi_pendiente = count_estado_usuario("PENDIENTE")
+    kpi_observado = count_estado_usuario("OBSERVADO")
+    kpi_revisado  = count_estado_usuario("REVISADO")
+    kpi_emitido   = count_estado_usuario("EMITIDO")
+    kpi_anulado   = count_estado_usuario("ANULADO")
+    conn_lite.close()
 
-        kpi_recibido  = count_estado("RECIBIDO")
-        kpi_pendiente = count_estado("PENDIENTE")
-        kpi_observado = count_estado("OBSERVADO")
-        kpi_revisado  = count_estado("REVISADO")
-        kpi_emitido   = count_estado("EMITIDO")
-        kpi_anulado   = count_estado("ANULADO")
+    # 2. Historial de Actividades: DIRECTO DE MYSQL
+    conn_my = db_mysql()
+    ultimas10 = []
+    try:
+        with conn_my.cursor() as cur:
+            if session.get("rol") == "COORDINADOR":
+                cur.execute("""
+                    SELECT id, ficha AS dni, usuario, accion AS estado, creado_en AS fecha, nombre_completo, tipo_documento
+                    FROM historial_solicitud ORDER BY id DESC LIMIT 10
+                """)
+            else:
+                cur.execute("""
+                    SELECT id, ficha AS dni, usuario, accion AS estado, creado_en AS fecha, nombre_completo, tipo_documento
+                    FROM historial_solicitud WHERE usuario = %s ORDER BY id DESC LIMIT 10
+                """, (nombre_usuario_actual,))
+            
+            ultimas10 = cur.fetchall()
+    finally:
+        conn_my.close()
 
-        # últimas 10 operaciones desde el historial
-    # Cambia s.estado por h.accion (o el detalle del historial)
-        ultimas10 = conn.execute("""
-            SELECT 
-                h.id AS id, 
-                s.tipo_documento, 
-                s.documento, 
-                (s.nombres || ' ' || s.apellidos) AS nombre_completo,
-                h.accion AS estado,  
-                h.usuario, 
-                h.creado_en AS fecha
-            FROM historial_solicitud h
-            JOIN solicitudes s ON s.id = h.solicitud_id
-            ORDER BY h.id DESC
-            LIMIT 10
-        """).fetchall()
+    return render_template(
+        "dashboard.html", active="dashboard",
+        kpi_recibido=kpi_recibido, kpi_pendiente=kpi_pendiente, kpi_observado=kpi_observado,
+        kpi_revisado=kpi_revisado, kpi_emitido=kpi_emitido, kpi_anulado=kpi_anulado,
+        ultimas10=ultimas10, alert_observadas=kpi_observado, alert_plantillas=0, alert_correos_fallidos=0
+    )
 
-        alert_observadas = kpi_observado
-        alert_plantillas = 0
-        alert_correos_fallidos = 0
-
+def add_historial(solicitud_id, ficha, usuario, accion, detalle=None, nombre_comp="N/A", tipo_doc="DOC"):
+    try:
+        conn = db_mysql()
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO historial_solicitud (solicitud_id, ficha, usuario, accion, detalle, creado_en, nombre_completo, tipo_documento)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (solicitud_id, ficha, usuario, accion, detalle, ahora(), nombre_comp, tipo_doc))
+        conn.commit()
         conn.close()
-
-        return render_template(
-            "dashboard.html",
-            active="dashboard",
-            kpi_recibido=kpi_recibido,
-            kpi_pendiente=kpi_pendiente,
-            kpi_observado=kpi_observado,
-            kpi_revisado=kpi_revisado,
-            kpi_emitido=kpi_emitido,
-            kpi_anulado=kpi_anulado,
-            ultimas10=ultimas10,
-            alert_observadas=alert_observadas,
-            alert_plantillas=alert_plantillas,
-            alert_correos_fallidos=alert_correos_fallidos,
-        )
-
-def add_historial(conn, solicitud_id, ficha, usuario, accion, detalle=None):
-        conn.execute("""
-            INSERT INTO historial_solicitud (solicitud_id, ficha, usuario, accion, detalle, creado_en)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (solicitud_id, ficha, usuario, accion, detalle, ahora()))
+    except Exception as e:
+        print(f"Error guardando historial en MySQL: {e}")
 
 
 @app.get("/solicitudes")
@@ -576,8 +675,6 @@ def solicitudes():
         hasta = (request.args.get("hasta") or "").strip()  # YYYY-MM-DD
 
         conn = db()
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
 
         where = []
         params = []
@@ -629,8 +726,6 @@ def solicitudes():
 @login_required
 def solicitudes_detalle(sid):
         conn = db()
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
 
         s = get_solicitud_por_id(conn, sid)
         if not s:
@@ -661,109 +756,54 @@ def get_historial(conn, sid):
 @app.post("/solicitudes/<int:sid>/guardar")
 @login_required
 def solicitudes_guardar(sid):
-        horas = (request.form.get("horas_totales") or "").strip()
-        observ = (request.form.get("observaciones") or "").strip()
+    horas = (request.form.get("horas_totales") or "").strip()
+    observ = (request.form.get("observaciones") or "").strip()
+    conn = db()
+    s = get_solicitud_por_id(conn, sid)
+    if not s:
+        conn.close(); flash("Solicitud no encontrada", "error"); return redirect(url_for("solicitudes"))
 
-        conn = db()
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
+    cambios = []
+    if (s["horas_totales"] or "") != horas: cambios.append(f"Horas {s['horas_totales'] or ''} -> {horas}")
+    if (s["observaciones"] or "") != observ: cambios.append("Observaciones actualizadas")
 
-        s = get_solicitud_por_id(conn, sid)
-        if not s:
-            conn.close()
-            flash("Solicitud no encontrada", "error")
-            return redirect(url_for("solicitudes"))
+    conn.execute("UPDATE solicitudes SET horas_totales = ?, observaciones = ?, actualizado_en = ? WHERE id = ?", (horas, observ, ahora(), sid))
+    conn.commit()
+    conn.close()
 
-        cambios = []
-        if (s["horas_totales"] or "") != horas:
-            cambios.append(f"Horas {s['horas_totales'] or ''} -> {horas}")
-        if (s["observaciones"] or "") != observ:
-            cambios.append("Observaciones actualizadas")
+    if cambios:
+        # AHORA PASAMOS EL NOMBRE
+        add_historial(sid, s["documento"] or "", session.get("nombre", "USUARIO"), "GUARDAR", " | ".join(cambios), f"{s['nombres']} {s['apellidos']}", s["tipo_documento"])
 
-        conn.execute("""
-            UPDATE solicitudes
-            SET horas_totales = ?, observaciones = ?, actualizado_en = ?
-            WHERE id = ?
-        """, (horas, observ, ahora(), sid))
+    flash("Cambios guardados", "success"); return redirect(url_for("solicitudes_detalle", sid=sid))
 
-        if cambios:
-            add_historial(
-                conn,
-                sid,
-                s["marca_temporal"] or "",
-                session.get("nombre", "USUARIO"),
-                "GUARDAR",
-                " | ".join(cambios)
-            )
-
-        conn.commit()
-        conn.close()
-
-        flash("Cambios guardados", "success")
-        return redirect(url_for("solicitudes_detalle", sid=sid))
 
 @app.post("/solicitudes/<int:sid>/estado/observado")
 @login_required
 def solicitudes_marcar_observado(sid):
-        conn = db()
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
+    conn = db(); s = get_solicitud_por_id(conn, sid)
+    if not s: conn.close(); flash("Solicitud no encontrada", "error"); return redirect(url_for("solicitudes"))
+    conn.execute("UPDATE solicitudes SET estado = 'OBSERVADO', actualizado_en = ? WHERE id = ?", (ahora(), sid))
+    conn.commit(); conn.close()
 
-        s = get_solicitud_por_id(conn, sid)
-        if not s:
-            conn.close()
-            flash("Solicitud no encontrada", "error")
-            return redirect(url_for("solicitudes"))
-
-        conn.execute("""
-            UPDATE solicitudes
-            SET estado = 'OBSERVADO',
-                actualizado_en = ?
-            WHERE id = ?
-        """, (ahora(), sid))
-
-        add_historial(conn, sid, s["marca_temporal"] or "", session.get("nombre","USUARIO"), "OBSERVADO", "Marcado como OBSERVADO")
-        conn.commit()
-        conn.close()
-
-        flash("Estado actualizado a OBSERVADO", "success")
-        return redirect(url_for("solicitudes_detalle", sid=sid))
+    add_historial(sid, s["documento"] or "", session.get("nombre","USUARIO"), "OBSERVADO", "Marcado como OBSERVADO", f"{s['nombres']} {s['apellidos']}", s["tipo_documento"])
+    flash("Estado actualizado a OBSERVADO", "success"); return redirect(url_for("solicitudes_detalle", sid=sid))
 
 @app.post("/solicitudes/<int:sid>/estado/revisado")
 @login_required
 def solicitudes_marcar_revisado(sid):
-        conn = db()
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
+    conn = db(); s = get_solicitud_por_id(conn, sid)
+    if not s: conn.close(); flash("Solicitud no encontrada", "error"); return redirect(url_for("solicitudes"))
+    conn.execute("UPDATE solicitudes SET estado = 'REVISADO', revisado_por = ?, fecha_revision = ?, actualizado_en = ? WHERE id = ?", (session.get("nombre","USUARIO"), ahora(), ahora(), sid))
+    conn.commit(); conn.close()
 
-        s = get_solicitud_por_id(conn, sid)
-        if not s:
-            conn.close()
-            flash("Solicitud no encontrada", "error")
-            return redirect(url_for("solicitudes"))
+    add_historial(sid, s["documento"] or "", session.get("nombre","USUARIO"), "REVISADO", "Marcado como REVISADO", f"{s['nombres']} {s['apellidos']}", s["tipo_documento"])
+    flash("Estado actualizado a REVISADO", "success"); return redirect(url_for("solicitudes_detalle", sid=sid))
 
-        conn.execute("""
-            UPDATE solicitudes
-            SET estado = 'REVISADO',
-                revisado_por = ?,
-                fecha_revision = ?,
-                actualizado_en = ?
-            WHERE id = ?
-        """, (session.get("nombre","USUARIO"), ahora(), ahora(), sid))
-
-        add_historial(conn, sid, s["marca_temporal"] or "", session.get("nombre","USUARIO"), "REVISADO", "Marcado como REVISADO")
-        conn.commit()
-        conn.close()
-
-        flash("Estado actualizado a REVISADO", "success")
-        return redirect(url_for("solicitudes_detalle", sid=sid))
-
-@app.post("/solicitudes/<int:sid>/emitir")
+@app.route("/solicitudes/<int:sid>/emitir", methods=['GET', 'POST'])
 @login_required
 def solicitudes_emitir(sid):
         conn = db()
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
         config = get_config(conn) 
 
         s = get_solicitud_por_id(conn, sid)
@@ -780,10 +820,18 @@ def solicitudes_emitir(sid):
 
         tipo_doc = s["tipo_documento"]
         carrera = s["carrera"]
-        plantilla = conn.execute("""
-            SELECT ruta_docx FROM plantillas 
-            WHERE tipo_documento = ? AND carrera = ? AND activo = 1
-        """, (tipo_doc, carrera)).fetchone()
+        plantilla = None
+        try:
+            conn_my = db_mysql()
+            with conn_my.cursor() as cur_my:
+                cur_my.execute("""
+                    SELECT ruta_docx FROM plantillas 
+                    WHERE tipo_documento = %s AND carrera = %s AND activo = 1
+                """, (tipo_doc, carrera))
+                plantilla = cur_my.fetchone()
+            conn_my.close()
+        except Exception as err_tpl:
+            print(f"Error buscando plantilla en MySQL: {err_tpl}")
 
         if not plantilla:
             conn.close()
@@ -853,22 +901,33 @@ def solicitudes_emitir(sid):
 
         conn.execute("""
             UPDATE solicitudes
-            SET estado = 'EMITIDO',
-                emitido_por = ?,
-                fecha_emision = ?,
-                actualizado_en = ?,
-                codigo_documento = ?,
-                ruta_pdf = ?
+            SET estado = 'EMITIDO', emitido_por = ?, fecha_emision = ?, actualizado_en = ?, codigo_documento = ?, ruta_pdf = ?
             WHERE id = ?
         """, (session.get("nombre","USUARIO"), ahora(), ahora(), codigo_doc, ruta_bd, sid))
-
-        add_historial(conn, sid, s["marca_temporal"] or "", session.get("nombre","USUARIO"), "EMISION", "Documento generado y EMITIDO")
         conn.commit()
         conn.close()
+
+     
+        add_historial(sid, s["documento"] or "", session.get("nombre","USUARIO"), "EMISION", "Documento generado y EMITIDO", f"{s['nombres']} {s['apellidos']}", s["tipo_documento"])
 
         try:
             conn_my = db_mysql()
             with conn_my.cursor() as cur:
+             
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS reportes (
+                        solicitud_id INT PRIMARY KEY,
+                        codigo_documento VARCHAR(100),
+                        nombre_completo VARCHAR(255),
+                        documento VARCHAR(50),
+                        tipo_documento VARCHAR(50),
+                        estado VARCHAR(50),
+                        fecha_emision DATETIME,
+                        emitido_por VARCHAR(100),
+                        ruta_pdf VARCHAR(500)
+                    )
+                """)
+                
                 nombre_completo = f"{s['nombres']} {s['apellidos']}"
                 cur.execute("""
                     INSERT INTO reportes (solicitud_id, codigo_documento, nombre_completo, documento, tipo_documento, estado, fecha_emision, emitido_por, ruta_pdf)
@@ -882,6 +941,8 @@ def solicitudes_emitir(sid):
             conn_my.commit()
             conn_my.close()
         except Exception as e:
+          
+            flash(f"Advertencia: Documento generado, pero hubo un error en MySQL: {e}", "warning")
             print(f"Error al guardar reporte en MySQL: {e}")
 
         flash("Solicitud marcada como EMITIDO y documento generado", "success")
@@ -892,183 +953,199 @@ def solicitudes_emitir(sid):
 @app.post("/solicitudes/<int:sid>/anular")
 @login_required
 def solicitudes_anular(sid):
-        conn = db()
-        ensure_solicitudes_schema(conn)
-        ensure_historial_schema(conn)
+    conn = db(); s = get_solicitud_por_id(conn, sid)
+    if not s: conn.close(); flash("Solicitud no encontrada", "error"); return redirect(url_for("solicitudes"))
+    conn.execute("UPDATE solicitudes SET estado = 'ANULADO', actualizado_en = ? WHERE id = ?", (ahora(), sid))
+    conn.commit(); conn.close()
 
-        s = get_solicitud_por_id(conn, sid)
-        if not s:
-            conn.close()
-            flash("Solicitud no encontrada", "error")
-            return redirect(url_for("solicitudes"))
+    add_historial(sid, s["documento"] or "", session.get("nombre","USUARIO"), "ANULADO", "Solicitud ANULADA", f"{s['nombres']} {s['apellidos']}", s["tipo_documento"])
 
-        
-        conn.execute("""
-            UPDATE solicitudes
-            SET estado = 'ANULADO',
-                actualizado_en = ?
-            WHERE id = ?
-        """, (ahora(), sid))
+    try:
+        conn_my = db_mysql()
+        with conn_my.cursor() as cur:
+            cur.execute("UPDATE reportes SET estado = 'ANULADO' WHERE solicitud_id = %s", (sid,))
+        conn_my.commit(); conn_my.close()
+    except Exception as e: print(f"Error al anular reporte en MySQL: {e}")
 
-        add_historial(conn, sid, s["marca_temporal"] or "", session.get("nombre","USUARIO"), "ANULADO", "Solicitud ANULADA")
-        conn.commit()
-        conn.close()
-
-        try:
-            conn_my = db_mysql()
-            with conn_my.cursor() as cur:
-                cur.execute("UPDATE reportes SET estado = 'ANULADO' WHERE solicitud_id = %s", (sid,))
-            conn_my.commit()
-            conn_my.close()
-        except Exception as e:
-            print(f"Error al anular reporte en MySQL: {e}")
-
-        flash("Solicitud anulada", "success")
-        return redirect(url_for("solicitudes_detalle", sid=sid))
-
+    flash("Solicitud anulada", "success"); return redirect(url_for("solicitudes_detalle", sid=sid))
 
 
 @app.post("/solicitudes/sincronizar")
 @login_required
 def solicitudes_sincronizar():
-        try:
-            url_con_cache_breaker = f"{SHEETS_CSV_URL}&cache_buster={int(time.time())}"
-            df = pd.read_csv(url_con_cache_breaker)
-            df.columns = df.columns.str.strip()
-        except Exception as e:
-            flash(f"Error al conectar con Google Sheets: {e}", "error")
-            return redirect(url_for("solicitudes"))
-
-        conn = db()
-        ensure_solicitudes_schema(conn)
-        cur = conn.cursor()
-
-        nuevos = duplicados = errores = 0
-
-        for _, row in df.iterrows():
-            marca         = s(row.get("Marca temporal"))
-            documento     = s(row.get("N° DOCUMENTO"))
-
-            if not documento or not marca:
-                continue
-
-            existe = cur.execute("SELECT 1 FROM solicitudes WHERE documento = ?", (documento,)).fetchone()
-            if existe:
-                duplicados += 1
-                continue 
-
-
-            tipo_raw      = upper(row.get("Seleccione lo que desea solicitar"))
-            nombres       = upper(row.get("NOMBRES"))
-            apellidos     = upper(row.get("APELLIDOS"))
-            f_inicio      = formatear_fecha_latam(row.get("Fecha de inicio (dd/mm/yyyy)"))
-            f_fin         = formatear_fecha_latam(row.get("Fecha de fin (dd/mm/yyyy)"))
-            uni           = upper(row.get("NOMBRE DE LA UNIVERSIDAD O INSTITUTO"))
-            cod_alumno    = s(row.get("CODIGO DE ALUMNO"))
-            facultad      = upper(row.get("FACULTAD"))
-            carrera_excel = upper(row.get("CARRERA")) 
-            ciclo         = s(row.get("CICLO"))
-            cargo         = upper(row.get("CARGO"))
-            
-            actividades_final = "" 
-            
-            encontrado = False
-            for carrera_mapeada, texto_actividades in ACTIVIDADES_POR_CARRERA.items():
-                if carrera_mapeada in carrera_excel or carrera_excel in carrera_mapeada:
-                    actividades_final = texto_actividades
-                    encontrado = True
-                    break
-            
-            if not encontrado:
-                actividades_final = s(row.get("ACTIVIDADES")) 
-
-            correo = s(row.get("CORREO ELECTRONICO") or row.get("CORREO ELECTRÓNICO") or row.get("Dirección de correo electrónico") or "")
-
-            if "CONSTANCIA" in tipo_raw:
-                tipo = "CONST"
-            elif "PRE-PROFESIONALES" in tipo_raw or "PRE PROFESIONALES" in tipo_raw:
-                tipo = "CERT_PRAC_PRE"
-            elif "PROFESIONALES" in tipo_raw:
-                tipo = "CERT_PRAC_PROF"
-            elif "TRABAJO" in tipo_raw:
-                tipo = "CERT_TRAB"
-            elif "ACEPTACION" in tipo_raw:
-                tipo = "CART_ACEPT"
-            elif "RECOMENDACION" in tipo_raw:
-                tipo = "CART_RECOM"
-            elif "RECONOCIMIENTO" in tipo_raw:
-                tipo = "CERT_RECON"
-            else:
-                tipo = "CERT"
-
-        
-            sheet_uid = f"{marca}|{documento}|{tipo}|{int(time.time())}"
-
-            try:
-                cur.execute("""
-                    INSERT INTO solicitudes (
-                        sheet_uid, marca_temporal, correo, correo_solicitante, tipo_documento,
-                        nombres, apellidos, documento,
-                        fecha_inicio, fecha_fin,
-                        universidad, codigo_alumno, facultad, carrera, ciclo, cargo,
-                        actividades, estado, creado_en, actualizado_en
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'RECIBIDO', ?, ?)
-                """, (
-                    sheet_uid, marca, correo, correo, tipo,
-                    nombres, apellidos, documento,
-                    f_inicio, f_fin,
-                    uni, cod_alumno, facultad, carrera_excel, ciclo, cargo,
-                    actividades_final, ahora(), ahora()
-                ))
-                nuevos += 1
-            except Exception as e:
-                print(f"ERROR EN FILA {documento}: {e}") 
-                errores += 1
-
-        conn.commit()
-        conn.close()
-
-        if errores > 0:
-            flash(f"Sincronización: {nuevos} nuevos. Hubo {errores} errores.", "warning")
-        else:
-            flash(f"Sincronización exitosa: {nuevos} nuevos, {duplicados} duplicados.", "success")
-            
+    try:
+        url_con_cache_breaker = f"{SHEETS_CSV_URL}&cache_buster={int(time.time())}"
+        df = pd.read_csv(url_con_cache_breaker)
+        df.columns = df.columns.str.strip()
+    except Exception as e:
+        flash(f"Error al conectar con Google Sheets: {e}", "error")
         return redirect(url_for("solicitudes"))
 
-def ensure_plantillas_schema(conn):
-        cur = conn.cursor()
+    conn = db()
+    ensure_solicitudes_schema(conn)
+    cur = conn.cursor()
 
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS plantillas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tipo_documento TEXT NOT NULL CHECK (tipo_documento IN ('CERT','CONST','CERT_TRAB','CERT_PRAC_PROF','CERT_PRAC_PRE','CART_ACEPT','CART_RECOM','CERT_RECON')),
-            carrera TEXT NOT NULL,
-            archivo_nombre TEXT NOT NULL,
-            ruta_docx TEXT NOT NULL,
-            activo INTEGER NOT NULL DEFAULT 1,
-            creado_en TEXT NOT NULL,
-            actualizado_en TEXT NOT NULL
-        )
-        """)
+    try:
+        conn_gm = db_mysql_gmingenieros()
+        cur_gm = conn_gm.cursor()
+    except Exception as e:
+        conn.close()
+        flash(f"Error al conectar con BD gmingenieros: {e}", "error")
+        return redirect(url_for("solicitudes"))
 
-        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_plantillas_tipo_carrera ON plantillas(tipo_documento, carrera)")
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_plantillas_activo ON plantillas(activo)")
-        conn.commit()
+
+    nuevos = duplicados = errores = omitidos = 0
+
+    for _, row in df.iterrows():
+        marca = s(row.get("Marca temporal"))
+        documento = s(row.get("N° DOCUMENTO"))
+
+        if not documento or not marca:
+            continue
+
+        existe = cur.execute("SELECT 1 FROM solicitudes WHERE documento = ?", (documento,)).fetchone()
+        if existe:
+            duplicados += 1
+            continue 
+
+        estado_inicial = 'RECIBIDO' 
+        try:
+            cur_gm.execute("SELECT 1 FROM empleados WHERE dni = %s", (documento,))
+            if cur_gm.fetchone():
+                estado_inicial = 'IGNORADO'
+                omitidos += 1
+        except Exception as e:
+            print(e)
+        # -------------------
+
+        tipo_raw = upper(row.get("Seleccione lo que desea solicitar"))
+        nombres = upper(row.get("NOMBRES"))
+        apellidos = upper(row.get("APELLIDOS"))
+        f_inicio = formatear_fecha_latam(row.get("Fecha de inicio (dd/mm/yyyy)"))
+        f_fin = formatear_fecha_latam(row.get("Fecha de fin (dd/mm/yyyy)"))
+        uni = upper(row.get("NOMBRE DE LA UNIVERSIDAD O INSTITUTO"))
+        cod_alumno = s(row.get("CODIGO DE ALUMNO"))
+        facultad = upper(row.get("FACULTAD"))
+        carrera_excel = upper(row.get("CARRERA")) 
+        ciclo = s(row.get("CICLO"))
+        cargo = upper(row.get("CARGO"))
+        
+        actividades_final = "" 
+        encontrado = False
+        
+        for carrera_mapeada, texto_actividades in ACTIVIDADES_POR_CARRERA.items():
+            if carrera_mapeada in carrera_excel or carrera_excel in carrera_mapeada:
+                actividades_final = texto_actividades
+                encontrado = True
+                break
+        
+        if not encontrado:
+            actividades_final = s(row.get("ACTIVIDADES")) 
+
+        correo = s(row.get("CORREO ELECTRONICO") or row.get("CORREO ELECTRÓNICO") or row.get("Dirección de correo electrónico") or "")
+
+        if "CONSTANCIA" in tipo_raw:
+            tipo = "CONST"
+        elif "PRE-PROFESIONALES" in tipo_raw or "PRE PROFESIONALES" in tipo_raw:
+            tipo = "CERT_PRAC_PRE"
+        elif "PROFESIONALES" in tipo_raw:
+            tipo = "CERT_PRAC_PROF"
+        elif "TRABAJO" in tipo_raw:
+            tipo = "CERT_TRAB"
+        elif "ACEPTACION" in tipo_raw:
+            tipo = "CART_ACEPT"
+        elif "RECOMENDACION" in tipo_raw:
+            tipo = "CART_RECOM"
+        elif "RECONOCIMIENTO" in tipo_raw:
+            tipo = "CERT_RECON"
+        else:
+            tipo = "CERT"
+
+        sheet_uid = f"{marca}|{documento}|{tipo}|{int(time.time())}"
+
+        try:
+            
+            cur.execute("""
+                INSERT INTO solicitudes (
+                    sheet_uid, marca_temporal, correo, correo_solicitante, tipo_documento,
+                    nombres, apellidos, documento,
+                    fecha_inicio, fecha_fin,
+                    universidad, codigo_alumno, facultad, carrera, ciclo, cargo,
+                    actividades, estado, creado_en, actualizado_en
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                sheet_uid, marca, correo, correo, tipo,
+                nombres, apellidos, documento,
+                f_inicio, f_fin,
+                uni, cod_alumno, facultad, carrera_excel, ciclo, cargo,
+                actividades_final, estado_inicial, ahora(), ahora() 
+            ))
+           
+            if estado_inicial == 'RECIBIDO':
+                nuevos += 1
+                
+                try:
+                    
+                    id_uni = buscar_id(uni, MAP_INSTITUCIONES)
+                    id_facultad = buscar_id(facultad, MAP_FACULTADES)
+                    id_carrera = buscar_id(carrera_excel, MAP_CARRERAS)
+
+                    # Calculamos el próximo IdEmpleado
+                    cur_gm.execute("SELECT IFNULL(MAX(IdEmpleado), 0) + 1 AS next_id FROM empleados")
+                    next_id = cur_gm.fetchone()["next_id"]
+                    
+                
+                    cur_gm.execute("""
+                        INSERT INTO empleados (
+                            IdEmpleado, Dni, Nombres, Apellidos, Correo, 
+                            CodigoEstudiante, Ciclo, estado,
+                            IdInstitucionEducativa, IdFacultad, IdCarrera
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        next_id, documento, nombres, apellidos, correo, 
+                        cod_alumno, ciclo, '1',
+                        id_uni, id_facultad, id_carrera
+                    ))
+                except Exception as error_mysql:
+                    print(f"Error al guardar en la tabla empleados (MySQL): {error_mysql}")
+
+        except Exception as e:
+            print(f"Error general de inserción: {e}") 
+            errores += 1
+
+    conn_gm.commit() 
+    conn_gm.close()
+    
+    conn.commit()   
+    conn.close()
+
+    registrados_bd = nuevos + omitidos 
+    
+    if errores > 0:
+        flash(f"Sincronización: {nuevos} nuevos, {omitidos} ignorados, {registrados_bd} registrados en la bd. {errores} errores.", "warning")
+    else:
+        flash(f"Sincronización exitosa: {nuevos} nuevos, {omitidos} ignorados, {duplicados} duplicados, {registrados_bd} registrados en la bd.", "success")
+        
+    return redirect(url_for("solicitudes"))
+
 
 @app.get("/plantillas")
 @login_required
 def plantillas():
-        conn = db()
-        ensure_plantillas_schema(conn)
-
-        rows = conn.execute("""
-            SELECT *
-            FROM plantillas
-            ORDER BY actualizado_en DESC, id DESC
-        """).fetchall()
-
-        total = conn.execute("SELECT COUNT(*) AS n FROM plantillas").fetchone()["n"]
+        conn = db_mysql()
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT *
+                FROM plantillas
+                ORDER BY actualizado_en DESC, id DESC
+            """)
+            rows = cur.fetchall()
+            
+            cur.execute("SELECT COUNT(*) AS n FROM plantillas")
+            total_row = cur.fetchone()
+            total = total_row["n"] if total_row else 0
         conn.close()
 
         return render_template(
@@ -1085,13 +1162,11 @@ def plantillas_subir():
         carrera = (request.form.get("carrera") or "").strip().upper()
         f = request.files.get("archivo")
 
-        
         tipos_validos = {"CERT_TRAB", "CERT_PRAC_PROF", "CERT_PRAC_PRE", "CART_ACEPT", "CART_RECOM", "CERT_RECON", "CERT", "CONST"}
         if tipo_input not in tipos_validos:
             flash(f"Tipo inválido: {tipo_input}", "error") 
             return redirect(url_for("plantillas"))
 
-    
         tipo_db = tipo_input
 
         if not carrera:
@@ -1121,31 +1196,25 @@ def plantillas_subir():
             flash(f"No se pudo guardar el archivo: {e}", "error")
             return redirect(url_for("plantillas"))
 
-        conn = db()
-        ensure_plantillas_schema(conn)
         ahora_txt = ahora()
         ruta_rel = str(dest_path.relative_to(BASE_DIR)).replace("\\", "/")
         
-        existente = conn.execute("""
-            SELECT id FROM plantillas 
-            WHERE tipo_documento = ? AND carrera = ?
-        """, (tipo_db, carrera)).fetchone()
-
-        if existente:
-            conn.execute("""
-                UPDATE plantillas 
-                SET archivo_nombre = ?, ruta_docx = ?, activo = 1, actualizado_en = ?
-                WHERE id = ?
-            """, (final_name, ruta_rel, ahora_txt, existente["id"]))
-        else:
-            conn.execute("""
+        # Conexión y guardado en MySQL
+        conn = db_mysql()
+        with conn.cursor() as cur:
+            cur.execute("""
                 INSERT INTO plantillas (tipo_documento, carrera, archivo_nombre, ruta_docx, activo, creado_en, actualizado_en)
-                VALUES (?, ?, ?, ?, 1, ?, ?)
+                VALUES (%s, %s, %s, %s, 1, %s, %s)
+                ON DUPLICATE KEY UPDATE 
+                    archivo_nombre = VALUES(archivo_nombre), 
+                    ruta_docx = VALUES(ruta_docx), 
+                    activo = 1, 
+                    actualizado_en = VALUES(actualizado_en)
             """, (tipo_db, carrera, final_name, ruta_rel, ahora_txt, ahora_txt))
-
         conn.commit()
         conn.close()
-        flash("Plantilla procesada correctamente", "success")
+        
+        flash("Plantilla procesada y guardada correctamente", "success")
         return redirect(url_for("plantillas"))
 
 @app.get("/usuarios")
@@ -1299,35 +1368,35 @@ def usuarios_eliminar(user_id):
 @app.post("/plantillas/<int:pid>/toggle")
 @login_required
 def plantillas_toggle(pid):
-        conn = db()
-        ensure_plantillas_schema(conn)
+        conn = db_mysql()
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, activo FROM plantillas WHERE id = %s", (pid,))
+            row = cur.fetchone()
+            
+            if not row:
+                conn.close()
+                flash("Plantilla no encontrada", "error")
+                return redirect(url_for("plantillas"))
 
-        row = conn.execute("SELECT id, activo FROM plantillas WHERE id = ?", (pid,)).fetchone()
-        if not row:
-            conn.close()
-            flash("Plantilla no encontrada", "error")
-            return redirect(url_for("plantillas"))
+            nuevo = 0 if int(row["activo"]) == 1 else 1
 
-        nuevo = 0 if int(row["activo"]) == 1 else 1
-
-        conn.execute("""
-            UPDATE plantillas
-            SET activo = ?, actualizado_en = ?
-            WHERE id = ?
-        """, (nuevo, ahora(), pid))
+            cur.execute("""
+                UPDATE plantillas
+                SET activo = %s, actualizado_en = %s
+                WHERE id = %s
+            """, (nuevo, ahora(), pid))
         conn.commit()
         conn.close()
 
-        flash("Plantilla actualizada", "success")
+        flash("Estado actualizado", "success")
         return redirect(url_for("plantillas"))
 
 @app.get("/plantillas/<int:pid>/descargar")
 @login_required
 def plantillas_descargar(pid):
-        conn = db()
-        ensure_plantillas_schema(conn)
+        conn = db_mysql()
 
-        p = conn.execute("SELECT * FROM plantillas WHERE id = ?", (pid,)).fetchone()
+        p = conn.execute("SELECT * FROM plantillas WHERE id = %s", (pid,)).fetchone()
         conn.close()
 
         if not p:
@@ -1410,10 +1479,16 @@ def reportes():
 @app.get("/configuracion")
 @login_required
 def configuracion():
-        conn = db()
-        u = conn.execute("SELECT * FROM usuarios WHERE id = ?", (session["user_id"],)).fetchone()
-        config = get_config(conn)
-        conn.close()
+
+        conn_my = db_mysql()
+        with conn_my.cursor() as cur:
+            cur.execute("SELECT * FROM usuarios WHERE id = %s", (session["user_id"],))
+            u = cur.fetchone()
+        conn_my.close()
+
+        conn_lite = db()
+        config = get_config(conn_lite)
+        conn_lite.close()
 
         return render_template(
             "configuracion.html",
@@ -1523,12 +1598,10 @@ def open_browser():
 
 
 with app.app_context():
-        connection = db()
-        ensure_solicitudes_schema(connection)
-        ensure_config_schema(connection)
-        ensure_plantillas_schema(connection)
-        ensure_historial_schema(connection)
-        connection.close()
+    connection = db()
+    ensure_solicitudes_schema(connection) 
+    ensure_config_schema(connection)
+    connection.close() 
 
 if __name__ == "__main__":
         Timer(1.5, open_browser).start()
