@@ -19,3 +19,4 @@ __pycache__/
 
 # Archivos temporales o de base de datos local si no quieres subirlos
 SistemaCertificados/archivos/emitidos/*.docx
+
