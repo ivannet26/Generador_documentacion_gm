@@ -728,13 +728,14 @@ def solicitudes_detalle(sid):
         conn = db()
 
         s = get_solicitud_por_id(conn, sid)
+        conn.close() 
+
         if not s:
-            conn.close()
             flash("Solicitud no encontrada", "error")
             return redirect(url_for("solicitudes"))
 
-        historial = get_historial(conn, sid)
-        conn.close()
+       
+        historial = get_historial(sid)
 
         return render_template(
             "detalle.html",
@@ -742,16 +743,24 @@ def solicitudes_detalle(sid):
             s=s,
             historial=historial
         )
-
 def get_solicitud_por_id(conn, sid):
         return conn.execute("SELECT * FROM solicitudes WHERE id = ?", (sid,)).fetchone()
 
-def get_historial(conn, sid):
-        return conn.execute("""
-            SELECT * FROM historial_solicitud
-            WHERE solicitud_id = ?
-            ORDER BY id DESC
-        """, (sid,)).fetchall()
+def get_historial(sid):
+        conn_my = db_mysql()
+        try:
+            with conn_my.cursor() as cur:
+                cur.execute("""
+                    SELECT * FROM historial_solicitud
+                    WHERE solicitud_id = %s
+                    ORDER BY id DESC
+                """, (sid,))
+                return cur.fetchall()
+        except Exception as e:
+            print(f"Error leyendo historial en MySQL: {e}")
+            return []
+        finally:
+            conn_my.close()
 
 @app.post("/solicitudes/<int:sid>/guardar")
 @login_required
