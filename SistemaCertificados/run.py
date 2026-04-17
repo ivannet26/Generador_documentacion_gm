@@ -210,7 +210,7 @@ else:
 
 ALLOWED_TEMPLATE_EXT = {".docx"}
 
-    # URL CSV publicada
+   
 SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRjpQ8p9e9e-95_0tLHiC1gMKc6GMdeEHvJb3gvQUyStrbRxQXfv97Fi6XwS__sRCHaOWqpMHpu_48i/pub?output=csv"
 
 
@@ -337,7 +337,6 @@ def upper(v):
         return s(v).upper()
 
 def parse_form_datetime_to_iso(value):
-        # Espera "d/m/yyyy HH:MM:SS" o "dd/mm/yyyy HH:MM:SS"
         txt = s(value)
         if not txt:
             return ""
@@ -388,11 +387,9 @@ def ensure_solicitudes_schema(conn):
         )
         """)
 
-        # 2 Detecta columnas existentes
+       
         existentes = {r["name"] for r in conn.execute("PRAGMA table_info(solicitudes)").fetchall()}
 
-        # 3 Agrega columnas faltantes de manera segura
-        # Nota importante, en SQLite no puedes añadir NOT NULL sin DEFAULT
         columnas = {
             "sheet_uid": "TEXT",
             "marca_temporal": "TEXT",
@@ -429,8 +426,7 @@ def ensure_solicitudes_schema(conn):
             if col not in existentes:
                 cur.execute(f"ALTER TABLE solicitudes ADD COLUMN {col} {tipo}")
 
-        # 4 Backfill para que no te vuelvan a salir errores por valores vacíos
-        # Copia correo_solicitante a correo si correo está vacío
+   
         cur.execute("""
             UPDATE solicitudes
             SET correo = correo_solicitante
@@ -438,7 +434,7 @@ def ensure_solicitudes_schema(conn):
             AND (correo_solicitante IS NOT NULL AND TRIM(correo_solicitante) <> '')
         """)
 
-        # Si actualizado_en está vacío, lo igualamos a creado_en
+    
         cur.execute("""
             UPDATE solicitudes
             SET actualizado_en = creado_en
@@ -624,7 +620,7 @@ def dashboard():
     kpi_anulado   = count_estado_usuario("ANULADO")
     conn_lite.close()
 
-    # 2. Historial de Actividades: DIRECTO DE MYSQL
+   
     conn_my = db_mysql()
     ultimas10 = []
     try:
@@ -1036,6 +1032,10 @@ def solicitudes_sincronizar():
         cod_alumno = s(row.get("CODIGO DE ALUMNO"))
         facultad = upper(row.get("FACULTAD"))
         carrera_excel = upper(row.get("CARRERA")) 
+        carrera_especificar = upper(row.get("ESPECIFICAR CARRERA(OTROS)"))
+        if carrera_especificar:
+            carrera_excel = carrera_especificar
+
         ciclo = s(row.get("CICLO"))
         cargo = upper(row.get("CARGO"))
         
@@ -1048,7 +1048,10 @@ def solicitudes_sincronizar():
                 encontrado = True
                 break
         
-        if not encontrado:
+        actividades_otro = s(row.get("ACTIVIDADES(SI ELEGISTE OTROS)"))
+        if actividades_otro:
+            actividades_final = actividades_otro
+        elif not encontrado:
             actividades_final = s(row.get("ACTIVIDADES")) 
 
         correo = s(row.get("CORREO ELECTRONICO") or row.get("CORREO ELECTRÓNICO") or row.get("Dirección de correo electrónico") or "")
@@ -1100,10 +1103,12 @@ def solicitudes_sincronizar():
                     id_facultad = buscar_id(facultad, MAP_FACULTADES)
                     id_carrera = buscar_id(carrera_excel, MAP_CARRERAS)
 
-                    # Calculamos el próximo IdEmpleado
+              
                     cur_gm.execute("SELECT IFNULL(MAX(IdEmpleado), 0) + 1 AS next_id FROM empleados")
                     next_id = cur_gm.fetchone()["next_id"]
                     
+                    if not id_carrera:
+                        id_carrera = 27
                 
                     cur_gm.execute("""
                         INSERT INTO empleados (
