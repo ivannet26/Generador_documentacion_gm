@@ -10,11 +10,11 @@ import sys
 from werkzeug.utils import secure_filename
 from flask import send_file, abort
 from docx import Document
-#import comtypes.client
+import comtypes.client
 import uuid
-#import pythoncom
+import pythoncom
 import time
-#import webbrowser
+import webbrowser
 from threading import Timer
 from dotenv import load_dotenv
 import unicodedata
@@ -42,7 +42,6 @@ else:
         PLANT_CONST_DIR = PLANTILLAS_DIR / "constancias"
         
         ACTIVIDADES_POR_CARRERA = {
-
         "INGENIERÍA CIVIL": (
             "● Elaboración de expedientes individuales con fines de tasación y diagnósticos técnicos legales.\n"
             "● Elaboración de memorias descriptivas, tasaciones.\n"
@@ -205,21 +204,15 @@ else:
             "INGENIERIA QUIMICA": 27, "NEGOCIOS": 28
         }
 
-
-
-
 ALLOWED_TEMPLATE_EXT = {".docx"}
-
    
 SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRjpQ8p9e9e-95_0tLHiC1gMKc6GMdeEHvJb3gvQUyStrbRxQXfv97Fi6XwS__sRCHaOWqpMHpu_48i/pub?output=csv"
-
 
 MYSQL_HOST = 'mysql-a21bb78-sistemasnet26-321c.k.aivencloud.com'       
 MYSQL_USER = 'avnadmin'           
 MYSQL_PASSWORD = os.getenv("DB_PASSWORD") 
 MYSQL_DB = 'SistemaGenerador'
 MYSQL_PORT = 10658
-
 
 def db_mysql():
     return pymysql.connect(
@@ -250,17 +243,23 @@ def db():
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
-
 def ahora():
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def buscar_id(valor_excel, diccionario):
     if not valor_excel: return None
-    if valor_excel in diccionario:
-        return diccionario[valor_excel]
+    
+    val_norm = normalizar_texto(valor_excel)
+    
     for key, val in diccionario.items():
-        if key in valor_excel or valor_excel in key:
+        if normalizar_texto(key) == val_norm:
             return val
+            
+    for key, val in diccionario.items():
+        key_norm = normalizar_texto(key)
+        if val_norm in key_norm or key_norm in val_norm:
+            return val
+            
     return None
 
 def normalizar_texto(texto):
@@ -268,24 +267,6 @@ def normalizar_texto(texto):
     texto = str(texto).upper().strip()
     texto_sin_tildes = ''.join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
     return texto_sin_tildes
-
-def buscar_id(valor_excel, diccionario):
-    if not valor_excel: return None
-    
-    val_norm = normalizar_texto(valor_excel)
-    
-   
-    for key, val in diccionario.items():
-        if normalizar_texto(key) == val_norm:
-            return val
-            
-
-    for key, val in diccionario.items():
-        key_norm = normalizar_texto(key)
-        if val_norm in key_norm or key_norm in val_norm:
-            return val
-            
-    return None
 
 def login_required(view_func):
         def wrapper(*args, **kwargs):
@@ -295,7 +276,6 @@ def login_required(view_func):
             return view_func(*args, **kwargs)
         wrapper.__name__ = view_func.__name__
         return wrapper
-
 
 def usuario_actual():
         if not session.get("user_id"):
@@ -348,7 +328,6 @@ def parse_form_datetime_to_iso(value):
                 pass
         return ""
 
-
 def ensure_solicitudes_schema(conn):
         cur = conn.cursor()
 
@@ -387,7 +366,6 @@ def ensure_solicitudes_schema(conn):
         )
         """)
 
-       
         existentes = {r["name"] for r in conn.execute("PRAGMA table_info(solicitudes)").fetchall()}
 
         columnas = {
@@ -426,7 +404,6 @@ def ensure_solicitudes_schema(conn):
             if col not in existentes:
                 cur.execute(f"ALTER TABLE solicitudes ADD COLUMN {col} {tipo}")
 
-   
         cur.execute("""
             UPDATE solicitudes
             SET correo = correo_solicitante
@@ -434,7 +411,6 @@ def ensure_solicitudes_schema(conn):
             AND (correo_solicitante IS NOT NULL AND TRIM(correo_solicitante) <> '')
         """)
 
-    
         cur.execute("""
             UPDATE solicitudes
             SET actualizado_en = creado_en
@@ -442,14 +418,12 @@ def ensure_solicitudes_schema(conn):
             AND (creado_en IS NOT NULL AND TRIM(creado_en) <> '')
         """)
 
-        # 5 Índices
         cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_solicitudes_sheet_uid ON solicitudes(sheet_uid)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_solicitudes_estado ON solicitudes(estado)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_solicitudes_documento ON solicitudes(documento)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_solicitudes_marca_dt ON solicitudes(marca_dt)")
 
         conn.commit()
-
 
 def ensure_config_schema(conn):
         cur = conn.cursor()
@@ -471,11 +445,9 @@ def ensure_config_schema(conn):
             """, (ahora(),))
         conn.commit()
 
-
 def get_config(conn):
         ensure_config_schema(conn)
         return conn.execute("SELECT * FROM configuracion WHERE id = 1").fetchone()
-
 
 @app.get("/")
 def root():
@@ -483,11 +455,9 @@ def root():
             return redirect(url_for("dashboard"))
         return redirect(url_for("login"))
 
-
 @app.get("/login")
 def login():
         return render_template("login.html")
-
 
 @app.post("/iniciar-sesion")
 def iniciar_sesion():
@@ -577,7 +547,6 @@ def registrarse():
         conn.commit()
     conn.close()
 
-
     if activo == 1:
         flash("Registro exitoso. Eres el primer usuario, ingresas como COORDINADOR.", "success")
     else:
@@ -585,20 +554,17 @@ def registrarse():
         
     return redirect(url_for("login"))
 
-
 @app.get("/logout")
 def logout():
         session.clear()
         flash("Sesión cerrada", "info")
         return redirect(url_for("login"))
 
-
 @app.get("/dashboard")
 @login_required
 def dashboard():
     nombre_usuario_actual = session.get("nombre", "")
 
-    # 1. KPIs
     conn_lite = db()
     def count_estado_usuario(estado):
         if session.get("rol") == "COORDINADOR":
@@ -660,15 +626,14 @@ def add_historial(solicitud_id, ficha, usuario, accion, detalle=None, nombre_com
     except Exception as e:
         print(f"Error guardando historial en MySQL: {e}")
 
-
 @app.get("/solicitudes")
 @login_required
 def solicitudes():
         estado = (request.args.get("estado") or "").strip().upper()
         tipo = (request.args.get("tipo") or "").strip().upper()
         dni = (request.args.get("dni") or "").strip()
-        desde = (request.args.get("desde") or "").strip()  # YYYY-MM-DD
-        hasta = (request.args.get("hasta") or "").strip()  # YYYY-MM-DD
+        desde = (request.args.get("desde") or "").strip() 
+        hasta = (request.args.get("hasta") or "").strip() 
 
         conn = db()
 
@@ -687,8 +652,6 @@ def solicitudes():
             where.append("documento LIKE ?")
             params.append(f"%{dni}%")
 
-        # filtro por fecha usando marca_dt
-        # desde y hasta vienen como YYYY-MM-DD
         if desde:
             where.append("(marca_dt >= ? OR (marca_dt IS NULL AND creado_en >= ?))")
             params.append(desde + " 00:00:00")
@@ -739,6 +702,7 @@ def solicitudes_detalle(sid):
             s=s,
             historial=historial
         )
+
 def get_solicitud_por_id(conn, sid):
         return conn.execute("SELECT * FROM solicitudes WHERE id = ?", (sid,)).fetchone()
 
@@ -777,11 +741,9 @@ def solicitudes_guardar(sid):
     conn.close()
 
     if cambios:
-        # AHORA PASAMOS EL NOMBRE
         add_historial(sid, s["documento"] or "", session.get("nombre", "USUARIO"), "GUARDAR", " | ".join(cambios), f"{s['nombres']} {s['apellidos']}", s["tipo_documento"])
 
     flash("Cambios guardados", "success"); return redirect(url_for("solicitudes_detalle", sid=sid))
-
 
 @app.post("/solicitudes/<int:sid>/estado/observado")
 @login_required
@@ -824,15 +786,16 @@ def solicitudes_emitir(sid):
             return redirect(url_for("solicitudes_detalle", sid=sid))
 
         tipo_doc = s["tipo_documento"]
-        carrera = s["carrera"]
+        
         plantilla = None
         try:
             conn_my = db_mysql()
             with conn_my.cursor() as cur_my:
                 cur_my.execute("""
                     SELECT ruta_docx FROM plantillas 
-                    WHERE tipo_documento = %s AND carrera = %s AND activo = 1
-                """, (tipo_doc, carrera))
+                    WHERE tipo_documento = %s AND activo = 1
+                    ORDER BY actualizado_en DESC LIMIT 1
+                """, (tipo_doc,))
                 plantilla = cur_my.fetchone()
             conn_my.close()
         except Exception as err_tpl:
@@ -840,14 +803,13 @@ def solicitudes_emitir(sid):
 
         if not plantilla:
             conn.close()
-            flash(f"No hay plantilla activa para {tipo_doc} de {carrera}", "error")
+            flash(f"No hay plantilla activa para el tipo de documento {tipo_doc}", "error")
             return redirect(url_for("solicitudes_detalle", sid=sid))
 
         ruta_plantilla_abs = (BASE_DIR / plantilla["ruta_docx"]).resolve()
         
         try:
             doc = Document(ruta_plantilla_abs)
-            
             
             reemplazos = {
                 "{{NOMBRE_COMPLETO}}": f"{s['nombres']} {s['apellidos']}",
@@ -953,8 +915,6 @@ def solicitudes_emitir(sid):
         flash("Solicitud marcada como EMITIDO y documento generado", "success")
         return redirect(url_for("solicitudes_detalle", sid=sid))
 
-       
-
 @app.post("/solicitudes/<int:sid>/anular")
 @login_required
 def solicitudes_anular(sid):
@@ -973,7 +933,6 @@ def solicitudes_anular(sid):
     except Exception as e: print(f"Error al anular reporte en MySQL: {e}")
 
     flash("Solicitud anulada", "success"); return redirect(url_for("solicitudes_detalle", sid=sid))
-
 
 @app.post("/solicitudes/sincronizar")
 @login_required
@@ -998,7 +957,6 @@ def solicitudes_sincronizar():
         flash(f"Error al conectar con BD gmingenieros: {e}", "error")
         return redirect(url_for("solicitudes"))
 
-
     nuevos = duplicados = errores = omitidos = 0
 
     for _, row in df.iterrows():
@@ -1021,7 +979,6 @@ def solicitudes_sincronizar():
                 omitidos += 1
         except Exception as e:
             print(e)
-        # -------------------
 
         tipo_raw = upper(row.get("Seleccione lo que desea solicitar"))
         nombres = upper(row.get("NOMBRES"))
@@ -1093,7 +1050,7 @@ def solicitudes_sincronizar():
                 uni, cod_alumno, facultad, carrera_excel, ciclo, cargo,
                 actividades_final, estado_inicial, ahora(), ahora() 
             ))
-           
+            
             if estado_inicial == 'RECIBIDO':
                 nuevos += 1
                 
@@ -1144,7 +1101,6 @@ def solicitudes_sincronizar():
         
     return redirect(url_for("solicitudes"))
 
-
 @app.get("/plantillas")
 @login_required
 def plantillas():
@@ -1173,7 +1129,6 @@ def plantillas():
 @login_required
 def plantillas_subir():
         tipo_input = (request.form.get("tipo_documento") or "").strip().upper()
-        carrera = (request.form.get("carrera") or "").strip().upper()
         f = request.files.get("archivo")
 
         tipos_validos = {"CERT_TRAB", "CERT_PRAC_PROF", "CERT_PRAC_PRE", "CART_ACEPT", "CART_RECOM", "CERT_RECON", "CERT", "CONST"}
@@ -1182,10 +1137,6 @@ def plantillas_subir():
             return redirect(url_for("plantillas"))
 
         tipo_db = tipo_input
-
-        if not carrera:
-            flash("Carrera es obligatoria", "error")
-            return redirect(url_for("plantillas"))
 
         if not f or not f.filename:
             flash("Debes seleccionar un archivo docx", "error")
@@ -1200,8 +1151,7 @@ def plantillas_subir():
         dest_dir = PLANT_CERT_DIR if tipo_db == "CERT" else PLANT_CONST_DIR
         dest_dir.mkdir(parents=True, exist_ok=True)
 
-        safe_carrera = "_".join(carrera.split())
-        final_name = f"{tipo_input}_{safe_carrera}.docx" 
+        final_name = f"{tipo_input}_GENERAL.docx" 
         dest_path = dest_dir / final_name
 
         try:
@@ -1213,18 +1163,17 @@ def plantillas_subir():
         ahora_txt = ahora()
         ruta_rel = str(dest_path.relative_to(BASE_DIR)).replace("\\", "/")
         
-        # Conexión y guardado en MySQL
         conn = db_mysql()
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO plantillas (tipo_documento, carrera, archivo_nombre, ruta_docx, activo, creado_en, actualizado_en)
-                VALUES (%s, %s, %s, %s, 1, %s, %s)
+                VALUES (%s, 'GENERAL', %s, %s, 1, %s, %s)
                 ON DUPLICATE KEY UPDATE 
                     archivo_nombre = VALUES(archivo_nombre), 
                     ruta_docx = VALUES(ruta_docx), 
                     activo = 1, 
                     actualizado_en = VALUES(actualizado_en)
-            """, (tipo_db, carrera, final_name, ruta_rel, ahora_txt, ahora_txt))
+            """, (tipo_db, final_name, ruta_rel, ahora_txt, ahora_txt))
         conn.commit()
         conn.close()
         
@@ -1405,29 +1354,32 @@ def plantillas_toggle(pid):
         flash("Estado actualizado", "success")
         return redirect(url_for("plantillas"))
 
-@app.get("/plantillas/<int:pid>/descargar")
+@app.post("/plantillas/<int:pid>/eliminar")
 @login_required
-def plantillas_descargar(pid):
+def plantillas_eliminar(pid):
         conn = db_mysql()
+        with conn.cursor() as cur:
+            cur.execute("SELECT ruta_docx FROM plantillas WHERE id = %s", (pid,))
+            p = cur.fetchone()
+            
+            if not p:
+                conn.close()
+                flash("Plantilla no encontrada", "error")
+                return redirect(url_for("plantillas"))
+                
+            try:
+                ruta_abs = (BASE_DIR / p["ruta_docx"]).resolve()
+                if ruta_abs.exists():
+                    os.remove(ruta_abs)
+            except Exception as e:
+                print(f"No se pudo borrar el archivo físico: {e}")
 
-        p = conn.execute("SELECT * FROM plantillas WHERE id = %s", (pid,)).fetchone()
+            cur.execute("DELETE FROM plantillas WHERE id = %s", (pid,))
+        conn.commit()
         conn.close()
 
-        if not p:
-            flash("Plantilla no encontrada", "error")
-            return redirect(url_for("plantillas"))
-
-        ruta_rel = p["ruta_docx"]
-        ruta_abs = (BASE_DIR / ruta_rel).resolve()
-
-        if not str(ruta_abs).startswith(str(BASE_DIR.resolve())):
-            abort(403)
-
-        if not ruta_abs.exists():
-            flash("El archivo no existe en disco", "error")
-            return redirect(url_for("plantillas"))
-
-        return send_file(ruta_abs, as_attachment=True, download_name=p["archivo_nombre"])
+        flash("Plantilla borrada correctamente", "success")
+        return redirect(url_for("plantillas"))
 
 @app.get("/reportes")
 @login_required
@@ -1522,7 +1474,6 @@ def configuracion_guardar():
             flash("La ruta de salida no puede estar vacía", "error")
             return redirect(url_for("configuracion"))
 
-        # normaliza slash final
         ruta_salida = ruta_salida.replace("\\", "/")
         if not ruta_salida.endswith("/"):
             ruta_salida += "/"
@@ -1610,7 +1561,6 @@ def descargar_doc(doc_id):
 def open_browser():
         webbrowser.open_new("http://127.0.0.1:5000/")
 
-
 with app.app_context():
     connection = db()
     ensure_solicitudes_schema(connection) 
@@ -1619,4 +1569,4 @@ with app.app_context():
 
 if __name__ == "__main__":
         Timer(1.5, open_browser).start()
-        app.run(port=5000, debug=False) 
+        app.run(port=5000, debug=False)
